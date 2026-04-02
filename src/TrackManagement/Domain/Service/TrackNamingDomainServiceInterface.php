@@ -20,7 +20,7 @@ interface TrackNamingDomainServiceInterface
     public function normalizeMusicalKeys(array $musicalKeys): string;
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      */
     public function normalizeBpms(array $bpms): string;
 }

@@ -9,7 +9,7 @@ use App\TrackManagement\Presentation\Dto\TrackFormViewDto;
 interface TrackFormPresentationServiceInterface
 {
     /**
-     * @param list<int>|null    $bpms
+     * @param list<float>|null  $bpms
      * @param list<string>|null $musicalKeys
      */
     public function buildCreateFormViewDto(
@@ -23,7 +23,7 @@ interface TrackFormPresentationServiceInterface
     ): TrackFormViewDto;
 
     /**
-     * @param list<int>|null    $bpms
+     * @param list<float>|null  $bpms
      * @param list<string>|null $musicalKeys
      */
     public function buildEditFormViewDto(

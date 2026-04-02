@@ -7,7 +7,7 @@ namespace App\TrackManagement\Facade\Dto;
 readonly class TrackExportDataDto
 {
     /**
-     * @param list<int>    $bpms
+     * @param list<float>  $bpms
      * @param list<string> $musicalKeys
      */
     public function __construct(

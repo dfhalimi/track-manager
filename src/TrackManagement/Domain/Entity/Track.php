@@ -31,7 +31,7 @@ class Track
     private ?string $publishingName = null;
 
     /**
-     * @var list<int>
+     * @var list<float>
      */
     #[ORM\Column(name: 'bpms', type: Types::JSON)]
     private array $bpms = [];
@@ -105,7 +105,7 @@ class Track
     }
 
     /**
-     * @return list<int>
+     * @return list<float>
      */
     public function getBpms(): array
     {
@@ -113,7 +113,7 @@ class Track
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      */
     public function setBpms(array $bpms): void
     {

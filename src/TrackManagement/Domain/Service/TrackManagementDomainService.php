@@ -16,6 +16,7 @@ use App\TrackManagement\Infrastructure\Repository\TrackRepositoryInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Uid\Uuid;
 use ValueError;
+use function abs;
 
 readonly class TrackManagementDomainService implements TrackManagementDomainServiceInterface
 {
@@ -188,6 +189,10 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
             if ($bpm <= 0) {
                 throw new ValueError('All BPM values must be greater than zero.');
             }
+
+            if (abs($bpm - round($bpm, 3)) >= 0.000001) {
+                throw new ValueError('All BPM values must have at most 3 decimal places.');
+            }
         }
 
         if ($track->getMusicalKeys() === []) {
@@ -206,7 +211,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
     }
 
     /**
-     * @param list<int>    $bpms
+     * @param list<float>  $bpms
      * @param list<string> $musicalKeys
      */
     private function resolveTitle(
@@ -226,9 +231,9 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      *
-     * @return list<int>
+     * @return list<float>
      */
     private function normalizeBpms(array $bpms): array
     {
@@ -258,11 +263,11 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      */
-    private function extractPrimaryBpm(array $bpms): int
+    private function extractPrimaryBpm(array $bpms): float
     {
-        return $bpms[0] ?? 0;
+        return $bpms[0] ?? 0.0;
     }
 
     private function normalizeNullableString(?string $value): ?string

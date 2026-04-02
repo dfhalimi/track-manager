@@ -9,7 +9,7 @@ use DateTimeImmutable;
 readonly class TrackListItemDto
 {
     /**
-     * @param list<int>    $bpms
+     * @param list<float>  $bpms
      * @param list<string> $musicalKeys
      */
     public function __construct(

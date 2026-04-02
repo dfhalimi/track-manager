@@ -159,7 +159,7 @@ final class TrackController extends AbstractController
     }
 
     /**
-     * @return list<int>
+     * @return list<float>
      */
     private function normalizeBpms(mixed $values): array
     {
@@ -178,7 +178,12 @@ final class TrackController extends AbstractController
                 continue;
             }
 
-            $bpms[] = (int) $trimmed;
+            $normalizedDecimal = str_replace(',', '.', $trimmed);
+            if (!preg_match('/^\d+(?:\.\d+)?$/', $normalizedDecimal)) {
+                continue;
+            }
+
+            $bpms[] = (float) $normalizedDecimal;
         }
 
         return $bpms;

@@ -59,9 +59,9 @@ readonly class TrackFileExportDomainService implements TrackFileExportDomainServ
 
         if ($baseName === '') {
             $bpms = implode(
-                '_',
+                '__',
                 array_map(
-                    static fn (int $bpm): string => sprintf('%dBPM', $bpm),
+                    fn (float $bpm): string => $this->formatBpmForTitle($bpm),
                     $trackExportData->bpms
                 )
             );
@@ -76,5 +76,18 @@ readonly class TrackFileExportDomainService implements TrackFileExportDomainServ
         }
 
         return sprintf('%s.%s', $baseName, $targetFormat);
+    }
+
+    private function formatBpmForTitle(float $bpm): string
+    {
+        return str_replace('.', '_', $this->formatBpm($bpm)) . 'BPM';
+    }
+
+    private function formatBpm(float $bpm): string
+    {
+        $formattedBpm = number_format($bpm, 3, '.', '');
+        $formattedBpm = rtrim($formattedBpm, '0');
+
+        return rtrim($formattedBpm, '.');
     }
 }

@@ -7,7 +7,7 @@ namespace App\TrackManagement\Presentation\Dto;
 readonly class TrackFormViewDto
 {
     /**
-     * @param list<int>    $bpms
+     * @param list<float>  $bpms
      * @param list<string> $musicalKeys
      * @param list<string> $musicalKeyOptions
      */

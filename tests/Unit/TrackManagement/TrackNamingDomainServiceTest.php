@@ -10,10 +10,10 @@ describe('TrackNamingDomainService', function (): void {
         $service = new TrackNamingDomainService();
 
         $result = $service->buildSuggestedTitle(
-            new TrackNamingInputDto(21, 'Tory Lanez Type Beat', [120, 180], ['a min', 'C# MAJ'])
+            new TrackNamingInputDto(21, 'Tory Lanez Type Beat', [120.123, 180.5], ['a min', 'C# MAJ'])
         );
 
-        expect($result)->toBe('21_Tory_Lanez_Type_Beat_120BPM_180BPM_Amin_C#maj');
+        expect($result)->toBe('21_Tory_Lanez_Type_Beat_120_123BPM__180_5BPM_Amin_C#maj');
     });
 
     it('falls back to a default beat name when the beat name is empty', function (): void {

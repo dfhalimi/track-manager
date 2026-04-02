@@ -168,7 +168,7 @@ export default class extends Controller<HTMLFormElement> {
     private currentBpms(): number[] {
         return this.bpmInputs()
             .map((input) => Number(input.value))
-            .filter((value) => Number.isInteger(value) && value > 0);
+            .filter((value) => Number.isFinite(value) && value > 0);
     }
 
     /**
@@ -190,7 +190,7 @@ export default class extends Controller<HTMLFormElement> {
                 return [];
             }
 
-            return parsed.filter((value): value is number => Number.isInteger(value) && value > 0);
+            return parsed.filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
         } catch {
             return [];
         }
@@ -262,7 +262,7 @@ export default class extends Controller<HTMLFormElement> {
             return "UnknownBpm";
         }
 
-        return bpms.map((bpm) => `${bpm}BPM`).join("_");
+        return bpms.map((bpm) => `${this.formatBpmForTitle(bpm)}BPM`).join("__");
     }
 
     /**
@@ -313,6 +313,14 @@ export default class extends Controller<HTMLFormElement> {
         }
 
         return left.every((value, index) => value === right[index]);
+    }
+
+    private formatBpmForTitle(bpm: number): string {
+        return this.formatBpm(bpm).replace(".", "_");
+    }
+
+    private formatBpm(bpm: number): string {
+        return bpm.toFixed(3).replace(/\.?0+$/, "");
     }
 
     /**

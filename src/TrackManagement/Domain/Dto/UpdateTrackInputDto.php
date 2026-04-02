@@ -7,7 +7,7 @@ namespace App\TrackManagement\Domain\Dto;
 readonly class UpdateTrackInputDto
 {
     /**
-     * @param list<int>    $bpms
+     * @param list<float>  $bpms
      * @param list<string> $musicalKeys
      */
     public function __construct(

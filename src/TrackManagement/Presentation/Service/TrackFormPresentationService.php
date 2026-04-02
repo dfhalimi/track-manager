@@ -23,7 +23,7 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
     }
 
     /**
-     * @param list<int>|null    $bpms
+     * @param list<float>|null  $bpms
      * @param list<string>|null $musicalKeys
      */
     public function buildCreateFormViewDto(
@@ -37,7 +37,7 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
     ): TrackFormViewDto {
         $trackNumber    = $this->trackManagementDomainService->getNextTrackNumberPreview();
         $beatName       = (string) ($beatName ?? '');
-        $bpms           = $bpms ?? [120];
+        $bpms           = $bpms ?? [120.0];
         $musicalKeys    = $this->normalizeMusicalKeys($musicalKeys ?? []);
         $suggestedTitle = $this->trackNamingDomainService->buildSuggestedTitle(
             new TrackNamingInputDto($trackNumber, $beatName, $bpms, $musicalKeys)
@@ -63,7 +63,7 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
     }
 
     /**
-     * @param list<int>|null    $bpms
+     * @param list<float>|null  $bpms
      * @param list<string>|null $musicalKeys
      */
     public function buildEditFormViewDto(
