@@ -11,6 +11,7 @@ interface TrackOverviewPresentationServiceInterface
     public function buildTrackListViewDto(
         ?string $searchQuery,
         ?string $statusFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $page,
@@ -23,6 +24,7 @@ interface TrackOverviewPresentationServiceInterface
     public function buildTrackSearchSuggestions(
         ?string $searchQuery,
         ?string $statusFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $limit

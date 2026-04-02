@@ -13,6 +13,7 @@ readonly class ProjectDto
         public string            $title,
         public string            $categoryUuid,
         public string            $categoryName,
+        public bool              $cancelled,
         public DateTimeImmutable $createdAt,
         public DateTimeImmutable $updatedAt
     ) {

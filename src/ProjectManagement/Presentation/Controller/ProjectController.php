@@ -37,6 +37,7 @@ final class ProjectController extends AbstractController
             'view' => $this->projectOverviewPresentationService->buildProjectListViewDto(
                 $request->query->getString('q', ''),
                 $request->query->getString('category', ''),
+                $request->query->getString('cancelled', ''),
                 $request->query->getString('sortBy', 'updatedAt'),
                 $request->query->getString('sortDirection', 'DESC'),
                 $request->query->getInt('page', 1),
@@ -52,6 +53,7 @@ final class ProjectController extends AbstractController
             'view' => $this->projectOverviewPresentationService->buildProjectListViewDto(
                 $request->query->getString('q', ''),
                 $request->query->getString('category', ''),
+                $request->query->getString('cancelled', ''),
                 $request->query->getString('sortBy', 'updatedAt'),
                 $request->query->getString('sortDirection', 'DESC'),
                 $request->query->getInt('page', 1),
@@ -67,6 +69,7 @@ final class ProjectController extends AbstractController
             'suggestions' => $this->projectOverviewPresentationService->buildProjectSearchSuggestions(
                 $request->query->getString('q', ''),
                 $request->query->getString('category', ''),
+                $request->query->getString('cancelled', ''),
                 $request->query->getString('sortBy', 'updatedAt'),
                 $request->query->getString('sortDirection', 'DESC'),
                 10
@@ -121,6 +124,12 @@ final class ProjectController extends AbstractController
     #[Route(path: '/projects/{projectUuid}/edit', name: 'project_management.presentation.edit', methods: [Request::METHOD_GET, Request::METHOD_POST])]
     public function editAction(Request $request, string $projectUuid): Response
     {
+        if ($this->projectManagementDomainService->getProjectByUuid($projectUuid)->isCancelled()) {
+            $this->addFlash('error', 'Archivierte Projekte koennen nicht bearbeitet werden.');
+
+            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        }
+
         if ($request->isMethod(Request::METHOD_POST)) {
             try {
                 $this->projectManagementDomainService->updateProject(
@@ -155,20 +164,34 @@ final class ProjectController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/projects/{projectUuid}/delete', name: 'project_management.presentation.delete', methods: [Request::METHOD_POST])]
-    public function deleteAction(Request $request, string $projectUuid): Response
+    #[Route(path: '/projects/{projectUuid}/cancel', name: 'project_management.presentation.cancel', methods: [Request::METHOD_POST])]
+    public function cancelAction(Request $request, string $projectUuid): Response
     {
-        if (!$this->isCsrfTokenValid('delete_project_' . $projectUuid, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('cancel_project_' . $projectUuid, $request->request->getString('_token'))) {
             $this->addFlash('error', 'Ungültiges CSRF-Token.');
 
             return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
         }
 
-        $this->mediaAssetManagementFacade->deleteCurrentProjectMediaAssetByProjectUuid($projectUuid);
-        $this->projectManagementDomainService->deleteProject($projectUuid);
-        $this->addFlash('success', 'Projekt wurde gelöscht.');
+        $this->projectManagementDomainService->cancelProject($projectUuid);
+        $this->addFlash('success', 'Projekt wurde archiviert.');
 
-        return $this->redirectToRoute('project_management.presentation.index');
+        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+    }
+
+    #[Route(path: '/projects/{projectUuid}/reactivate', name: 'project_management.presentation.reactivate', methods: [Request::METHOD_POST])]
+    public function reactivateAction(Request $request, string $projectUuid): Response
+    {
+        if (!$this->isCsrfTokenValid('reactivate_project_' . $projectUuid, $request->request->getString('_token'))) {
+            $this->addFlash('error', 'Ungültiges CSRF-Token.');
+
+            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        }
+
+        $this->projectManagementDomainService->reactivateProject($projectUuid);
+        $this->addFlash('success', 'Projekt wurde reaktiviert.');
+
+        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\FileExport\Domain\Dto\ExportProjectFilesInputDto;
 use App\FileExport\Domain\Dto\ExportTrackFileInputDto;
 use App\FileExport\Facade\Dto\ExportedProjectArchiveDto;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
+use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use RuntimeException;
 use ValueError;
 use ZipArchive;
@@ -16,7 +17,8 @@ readonly class ProjectFileExportDomainService implements ProjectFileExportDomain
 {
     public function __construct(
         private ProjectManagementFacadeInterface      $projectManagementFacade,
-        private TrackFileExportDomainServiceInterface $trackFileExportDomainService
+        private TrackFileExportDomainServiceInterface $trackFileExportDomainService,
+        private TrackManagementFacadeInterface        $trackManagementFacade
     ) {
     }
 
@@ -41,6 +43,10 @@ readonly class ProjectFileExportDomainService implements ProjectFileExportDomain
 
         try {
             foreach ($this->projectManagementFacade->getTrackAssignmentsByProjectUuid($input->projectUuid) as $assignment) {
+                if ($this->trackManagementFacade->getTrackByUuid($assignment->trackUuid)->cancelled) {
+                    continue;
+                }
+
                 try {
                     $exportedTrackFile = $this->trackFileExportDomainService->exportTrackFile(
                         new ExportTrackFileInputDto($assignment->trackUuid, $targetFormat)

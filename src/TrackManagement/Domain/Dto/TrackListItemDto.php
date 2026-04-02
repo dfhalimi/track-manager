@@ -22,6 +22,7 @@ readonly class TrackListItemDto
         public array             $musicalKeys,
         public int               $progress,
         public string            $status,
+        public bool              $cancelled,
         public bool              $hasCurrentFile,
         public DateTimeImmutable $updatedAt
     ) {

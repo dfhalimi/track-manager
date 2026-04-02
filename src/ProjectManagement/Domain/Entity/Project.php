@@ -34,6 +34,9 @@ class Project
     #[ORM\Column(type: Types::JSON)]
     private array $artists = [];
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $cancelled = false;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
 
@@ -94,6 +97,16 @@ class Project
     public function setArtists(array $artists): void
     {
         $this->artists = $artists;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->cancelled;
+    }
+
+    public function setCancelled(bool $cancelled): void
+    {
+        $this->cancelled = $cancelled;
     }
 
     public function getCreatedAt(): DateTimeImmutable

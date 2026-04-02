@@ -18,6 +18,7 @@ readonly class ProjectListViewDto
         public array   $items,
         public string  $searchQuery,
         public string  $categoryFilter,
+        public string  $cancelledFilter,
         public array   $categoryOptions,
         public string  $sortBy,
         public string  $sortDirection,

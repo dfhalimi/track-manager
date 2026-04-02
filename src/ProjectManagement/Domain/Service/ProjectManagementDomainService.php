@@ -56,6 +56,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
     public function updateProject(UpdateProjectInputDto $input): Project
     {
         $project = $this->projectRepository->getByUuid($input->projectUuid);
+        $this->assertProjectIsActive($project);
 
         $project->setTitle($this->normalizeTitle($input->title));
         $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
@@ -74,6 +75,35 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project = $this->projectRepository->getByUuid($projectUuid);
         $this->projectTrackAssignmentRepository->removeAllByProjectUuid($projectUuid);
         $this->projectRepository->remove($project);
+    }
+
+    public function cancelProject(string $projectUuid): Project
+    {
+        $project = $this->projectRepository->getByUuid($projectUuid);
+        if ($project->isCancelled()) {
+            return $project;
+        }
+
+        $project->setCancelled(true);
+        $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+        $this->projectRepository->save($project);
+
+        return $project;
+    }
+
+    public function reactivateProject(string $projectUuid): Project
+    {
+        $project = $this->projectRepository->getByUuid($projectUuid);
+        if (!$project->isCancelled()) {
+            return $project;
+        }
+
+        $this->validateProject($project);
+        $project->setCancelled(false);
+        $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+        $this->projectRepository->save($project);
+
+        return $project;
     }
 
     public function getProjectByUuid(string $projectUuid): Project
@@ -151,6 +181,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
                 $project->getTitle(),
                 $this->projectCategoryRepository->getByUuid($project->getCategoryUuid())->getName(),
                 $project->getArtists(),
+                $project->isCancelled(),
                 count($this->projectTrackAssignmentRepository->findByProjectUuid($project->getUuid())),
                 $project->getUpdatedAt()
             );
@@ -183,7 +214,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
     public function addTrackToProject(AddTrackToProjectInputDto $input): ProjectTrackAssignment
     {
         $project = $this->projectRepository->getByUuid($input->projectUuid);
-        $this->ensureTrackExists($input->trackUuid);
+        $this->assertProjectIsActive($project);
+        $this->ensureTrackIsActive($input->trackUuid);
 
         if ($this->projectTrackAssignmentRepository->findByProjectUuidAndTrackUuid($input->projectUuid, $input->trackUuid) !== null) {
             throw new ValueError('Track is already assigned to this project.');
@@ -208,7 +240,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     public function removeTrackFromProject(RemoveTrackFromProjectInputDto $input): void
     {
-        $project    = $this->projectRepository->getByUuid($input->projectUuid);
+        $project = $this->projectRepository->getByUuid($input->projectUuid);
+        $this->assertProjectIsActive($project);
         $assignment = $this->projectTrackAssignmentRepository->findByProjectUuidAndTrackUuid($input->projectUuid, $input->trackUuid);
 
         if ($assignment === null) {
@@ -223,7 +256,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     public function reorderProjectTracks(ReorderProjectTracksInputDto $input): void
     {
-        $project           = $this->projectRepository->getByUuid($input->projectUuid);
+        $project = $this->projectRepository->getByUuid($input->projectUuid);
+        $this->assertProjectIsActive($project);
         $assignments       = $this->projectTrackAssignmentRepository->findByProjectUuid($input->projectUuid);
         $orderedTrackUuids = $input->orderedTrackUuids;
 
@@ -281,6 +315,30 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         }
     }
 
+    public function removeTrackFromActiveProjects(string $trackUuid): void
+    {
+        $assignments          = $this->projectTrackAssignmentRepository->findByTrackUuid($trackUuid);
+        $affectedProjectUuids = [];
+
+        foreach ($assignments as $assignment) {
+            $project = $this->projectRepository->getByUuid($assignment->getProjectUuid());
+            if ($project->isCancelled()) {
+                continue;
+            }
+
+            $this->projectTrackAssignmentRepository->remove($assignment);
+            $affectedProjectUuids[] = $assignment->getProjectUuid();
+        }
+
+        foreach (array_values(array_unique($affectedProjectUuids)) as $projectUuid) {
+            $this->resequenceAssignments($projectUuid);
+
+            $project = $this->projectRepository->getByUuid($projectUuid);
+            $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+            $this->projectRepository->save($project);
+        }
+    }
+
     private function resolveCategory(string $categoryName): ProjectCategory
     {
         $displayName    = ProjectCategoryCatalog::normalizeDisplayName($categoryName);
@@ -329,6 +387,22 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
     {
         if (!$this->trackManagementFacade->trackExists($trackUuid)) {
             throw new ValueError('Target track does not exist.');
+        }
+    }
+
+    private function ensureTrackIsActive(string $trackUuid): void
+    {
+        $this->ensureTrackExists($trackUuid);
+
+        if ($this->trackManagementFacade->getTrackByUuid($trackUuid)->cancelled) {
+            throw new ValueError('Archivierte Tracks koennen nicht zu Projekten hinzugefuegt werden.');
+        }
+    }
+
+    private function assertProjectIsActive(Project $project): void
+    {
+        if ($project->isCancelled()) {
+            throw new ValueError('Archivierte Projekte koennen nicht bearbeitet werden.');
         }
     }
 

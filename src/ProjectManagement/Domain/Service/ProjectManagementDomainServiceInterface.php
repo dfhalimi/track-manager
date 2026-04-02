@@ -23,6 +23,10 @@ interface ProjectManagementDomainServiceInterface
 
     public function deleteProject(string $projectUuid): void;
 
+    public function cancelProject(string $projectUuid): Project;
+
+    public function reactivateProject(string $projectUuid): Project;
+
     public function getProjectByUuid(string $projectUuid): Project;
 
     /**
@@ -56,4 +60,6 @@ interface ProjectManagementDomainServiceInterface
     public function reorderProjectTracks(ReorderProjectTracksInputDto $input): void;
 
     public function removeTrackFromAllProjects(string $trackUuid): void;
+
+    public function removeTrackFromActiveProjects(string $trackUuid): void;
 }

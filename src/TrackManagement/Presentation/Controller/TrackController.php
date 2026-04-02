@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Presentation\Controller;
 
-use App\FileImport\Facade\FileImportFacadeInterface;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\TrackManagement\Domain\Dto\CreateTrackInputDto;
 use App\TrackManagement\Domain\Dto\UpdateTrackInputDto;
@@ -26,7 +25,6 @@ final class TrackController extends AbstractController
         private readonly TrackDetailPresentationServiceInterface   $trackDetailPresentationService,
         private readonly TrackFormPresentationServiceInterface     $trackFormPresentationService,
         private readonly TrackManagementDomainServiceInterface     $trackManagementDomainService,
-        private readonly FileImportFacadeInterface                 $fileImportFacade,
         private readonly ProjectManagementFacadeInterface          $projectManagementFacade
     ) {
     }
@@ -37,6 +35,7 @@ final class TrackController extends AbstractController
         $viewDto = $this->trackOverviewPresentationService->buildTrackListViewDto(
             $request->query->getString('q', ''),
             $request->query->getString('status', ''),
+            $request->query->getString('cancelled', ''),
             $request->query->getString('sortBy', 'updatedAt'),
             $request->query->getString('sortDirection', 'DESC'),
             $request->query->getInt('page', 1),
@@ -55,6 +54,7 @@ final class TrackController extends AbstractController
             'view' => $this->trackOverviewPresentationService->buildTrackListViewDto(
                 $request->query->getString('q', ''),
                 $request->query->getString('status', ''),
+                $request->query->getString('cancelled', ''),
                 $request->query->getString('sortBy', 'updatedAt'),
                 $request->query->getString('sortDirection', 'DESC'),
                 $request->query->getInt('page', 1),
@@ -70,6 +70,7 @@ final class TrackController extends AbstractController
             'suggestions' => $this->trackOverviewPresentationService->buildTrackSearchSuggestions(
                 $request->query->getString('q', ''),
                 $request->query->getString('status', ''),
+                $request->query->getString('cancelled', ''),
                 $request->query->getString('sortBy', 'updatedAt'),
                 $request->query->getString('sortDirection', 'DESC'),
                 10
@@ -128,6 +129,12 @@ final class TrackController extends AbstractController
     #[Route(path: '/tracks/{trackUuid}/edit', name: 'track_management.presentation.edit', methods: [Request::METHOD_GET, Request::METHOD_POST])]
     public function editAction(Request $request, string $trackUuid): Response
     {
+        if ($this->trackManagementDomainService->getTrackByUuid($trackUuid)->isCancelled()) {
+            $this->addFlash('error', 'Archivierte Tracks koennen nicht bearbeitet werden.');
+
+            return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+        }
+
         if ($request->isMethod(Request::METHOD_POST)) {
             try {
                 $this->trackManagementDomainService->updateTrack(
@@ -166,21 +173,35 @@ final class TrackController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/tracks/{trackUuid}/delete', name: 'track_management.presentation.delete', methods: [Request::METHOD_POST])]
-    public function deleteAction(Request $request, string $trackUuid): Response
+    #[Route(path: '/tracks/{trackUuid}/cancel', name: 'track_management.presentation.cancel', methods: [Request::METHOD_POST])]
+    public function cancelAction(Request $request, string $trackUuid): Response
     {
-        if (!$this->isCsrfTokenValid('delete_track_' . $trackUuid, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('cancel_track_' . $trackUuid, $request->request->getString('_token'))) {
             $this->addFlash('error', 'Ungültiges CSRF-Token.');
 
             return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
         }
 
-        $this->fileImportFacade->deleteCurrentTrackFileByTrackUuid($trackUuid);
-        $this->projectManagementFacade->removeTrackFromAllProjects($trackUuid);
-        $this->trackManagementDomainService->deleteTrack($trackUuid);
-        $this->addFlash('success', 'Track wurde gelöscht.');
+        $this->projectManagementFacade->removeTrackFromActiveProjects($trackUuid);
+        $this->trackManagementDomainService->cancelTrack($trackUuid);
+        $this->addFlash('success', 'Track wurde archiviert.');
 
-        return $this->redirectToRoute('track_management.presentation.index');
+        return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+    }
+
+    #[Route(path: '/tracks/{trackUuid}/reactivate', name: 'track_management.presentation.reactivate', methods: [Request::METHOD_POST])]
+    public function reactivateAction(Request $request, string $trackUuid): Response
+    {
+        if (!$this->isCsrfTokenValid('reactivate_track_' . $trackUuid, $request->request->getString('_token'))) {
+            $this->addFlash('error', 'Ungültiges CSRF-Token.');
+
+            return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+        }
+
+        $this->trackManagementDomainService->reactivateTrack($trackUuid);
+        $this->addFlash('success', 'Track wurde reaktiviert.');
+
+        return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
     }
 
     private function normalizeNullableString(string $value): ?string

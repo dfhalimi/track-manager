@@ -14,11 +14,18 @@
                 <p class="text-sm text-slate-600">Erstellt am {{ view.createdAt }}</p>
             </div>
             <div class="flex gap-3">
-                <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
-                <form method="post" action="{{ view.deleteUrl }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token('delete_project_' ~ view.uuid) }}">
-                    <button type="submit" class="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white">Löschen</button>
-                </form>
+                {% if not view.cancelled %}
+                    <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
+                    <form method="post" action="{{ view.cancelUrl }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_project_' ~ view.uuid) }}">
+                        <button type="submit" class="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white">Archivieren</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{{ view.reactivateUrl }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reactivate_project_' ~ view.uuid) }}">
+                        <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Reaktivieren</button>
+                    </form>
+                {% endif %}
             </div>
         </div>
 
@@ -29,6 +36,12 @@
                 </div>
             {% endfor %}
         {% endfor %}
+
+        {% if view.cancelled %}
+            <div class="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Dieses Projekt wurde archiviert. Es bleibt zur Nachvollziehbarkeit sichtbar, kann aber aktuell nicht bearbeitet werden.
+            </div>
+        {% endif %}
 
         <div class="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
             <div class="rounded border border-slate-200 bg-white p-5">
@@ -44,23 +57,27 @@
                             <p><span class="font-medium">Größe:</span> {{ view.mediaAsset.dimensionsLabel }}</p>
                             <p><span class="font-medium">Hochgeladen:</span> {{ view.mediaAsset.uploadedAt }}</p>
                         </div>
-                        <form
-                            action="{{ view.mediaAsset.replaceUrl }}"
-                            method="post"
-                            enctype="multipart/form-data"
-                            class="space-y-2"
-                            data-controller="file-upload"
-                        >
-                            <input
-                                type="file"
-                                name="project_image"
-                                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                                class="hidden"
-                                data-file-upload-target="input"
-                                data-action="change->file-upload#submitOnChange"
+                        {% if not view.cancelled %}
+                            <form
+                                action="{{ view.mediaAsset.replaceUrl }}"
+                                method="post"
+                                enctype="multipart/form-data"
+                                class="space-y-2"
+                                data-controller="file-upload"
                             >
-                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Projektbild ersetzen</button>
-                        </form>
+                                <input
+                                    type="file"
+                                    name="project_image"
+                                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                                    class="hidden"
+                                    data-file-upload-target="input"
+                                    data-action="change->file-upload#submitOnChange"
+                                >
+                                <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Projektbild ersetzen</button>
+                            </form>
+                        {% else %}
+                            <p class="text-xs text-slate-500">Bestehende Projektbilder bleiben verfuegbar, koennen aber nicht ersetzt werden.</p>
+                        {% endif %}
                         <div class="flex flex-wrap gap-2">
                             <a href="{{ view.mediaAsset.exportJpgUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export JPG 3000x3000</a>
                             <a href="{{ view.mediaAsset.exportPngUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export PNG 3000x3000</a>
@@ -76,7 +93,9 @@
                 <div class="mb-4 flex items-center justify-between">
                     <div>
                         <h2 class="text-lg font-semibold text-slate-900">Tracks im Projekt</h2>
-                        <p class="text-sm text-slate-600">Tracks können per Drag-and-Drop neu angeordnet werden.</p>
+                        <p class="text-sm text-slate-600">
+                            {{ view.cancelled ? 'Dieses Projekt ist schreibgeschützt.' : 'Tracks können per Drag-and-Drop neu angeordnet werden.' }}
+                        </p>
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="flex gap-2">
@@ -94,34 +113,36 @@
 
                 <div
                     class="space-y-3"
-                    data-controller="project-track-reorder"
-                    data-action="dragover->project-track-reorder#dragOver drop->project-track-reorder#drop"
+                    {% if not view.cancelled %}data-controller="project-track-reorder"{% endif %}
+                    {% if not view.cancelled %}data-action="dragover->project-track-reorder#dragOver drop->project-track-reorder#drop"{% endif %}
                 >
                     {% for item in view.tracks %}
                         <div
                             class="group rounded border border-slate-200 p-3 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
-                            draggable="true"
-                            data-project-track-reorder-target="item"
-                            data-item-uuid="{{ item.trackUuid }}"
-                            data-action="dragstart->project-track-reorder#startDrag dragend->project-track-reorder#endDrag"
+                            {% if not view.cancelled %}draggable="true"{% endif %}
+                            {% if not view.cancelled %}data-project-track-reorder-target="item"{% endif %}
+                            {% if not view.cancelled %}data-item-uuid="{{ item.trackUuid }}"{% endif %}
+                            {% if not view.cancelled %}data-action="dragstart->project-track-reorder#startDrag dragend->project-track-reorder#endDrag"{% endif %}
                         >
                             <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div class="flex items-center gap-3">
-                                    <span
-                                        class="inline-flex h-7 w-7 shrink-0 items-center justify-center self-center text-slate-500 cursor-pointer select-none leading-none transition group-hover:text-slate-600"
-                                        title="Ziehen zum Sortieren"
-                                        data-drag-handle
-                                    >
-                                        <svg class="block h-4 w-4" viewBox="0 0 8 12" fill="currentColor" aria-hidden="true">
-                                            <circle cx="2" cy="2" r="1"></circle>
-                                            <circle cx="6" cy="2" r="1"></circle>
-                                            <circle cx="2" cy="6" r="1"></circle>
-                                            <circle cx="6" cy="6" r="1"></circle>
-                                            <circle cx="2" cy="10" r="1"></circle>
-                                            <circle cx="6" cy="10" r="1"></circle>
-                                        </svg>
-                                        <span class="sr-only">Ziehen</span>
-                                    </span>
+                                    {% if not view.cancelled %}
+                                        <span
+                                            class="inline-flex h-7 w-7 shrink-0 items-center justify-center self-center text-slate-500 cursor-pointer select-none leading-none transition group-hover:text-slate-600"
+                                            title="Ziehen zum Sortieren"
+                                            data-drag-handle
+                                        >
+                                            <svg class="block h-4 w-4" viewBox="0 0 8 12" fill="currentColor" aria-hidden="true">
+                                                <circle cx="2" cy="2" r="1"></circle>
+                                                <circle cx="6" cy="2" r="1"></circle>
+                                                <circle cx="2" cy="6" r="1"></circle>
+                                                <circle cx="6" cy="6" r="1"></circle>
+                                                <circle cx="2" cy="10" r="1"></circle>
+                                                <circle cx="6" cy="10" r="1"></circle>
+                                            </svg>
+                                            <span class="sr-only">Ziehen</span>
+                                        </span>
+                                    {% endif %}
                                     <div>
                                         <p class="text-sm font-medium text-slate-900">{{ item.position }}. {{ item.label }}</p>
                                         <a href="{{ item.showUrl }}" class="text-xs text-slate-600 underline">Track ansehen</a>
@@ -152,22 +173,24 @@
                                         </div>
                                     {% endif %}
 
-                                    <form action="{{ item.removeUrl }}" method="post">
-                                        <button
-                                            type="submit"
-                                            class="inline-flex h-10 w-10 items-center justify-center rounded border border-red-300 text-red-700 transition hover:bg-red-50"
-                                            aria-label="Track aus Projekt entfernen"
-                                            title="Track entfernen"
-                                        >
-                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                                <path d="M3 6h18"></path>
-                                                <path d="M8 6V4h8v2"></path>
-                                                <path d="M19 6l-1 14H6L5 6"></path>
-                                                <path d="M10 11v6"></path>
-                                                <path d="M14 11v6"></path>
-                                            </svg>
-                                        </button>
-                                    </form>
+                                    {% if not view.cancelled %}
+                                        <form action="{{ item.removeUrl }}" method="post">
+                                            <button
+                                                type="submit"
+                                                class="inline-flex h-10 w-10 items-center justify-center rounded border border-red-300 text-red-700 transition hover:bg-red-50"
+                                                aria-label="Track aus Projekt entfernen"
+                                                title="Track entfernen"
+                                            >
+                                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path d="M3 6h18"></path>
+                                                    <path d="M8 6V4h8v2"></path>
+                                                    <path d="M19 6l-1 14H6L5 6"></path>
+                                                    <path d="M10 11v6"></path>
+                                                    <path d="M14 11v6"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -175,49 +198,53 @@
                         <div class="rounded border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">Noch keine Tracks im Projekt.</div>
                     {% endfor %}
 
-                    <form action="{{ view.reorderUrl }}" method="post" class="hidden" data-project-track-reorder-target="form">
-                        <input type="hidden" name="ordered_track_uuids" value="" data-project-track-reorder-target="input">
-                    </form>
+                    {% if not view.cancelled %}
+                        <form action="{{ view.reorderUrl }}" method="post" class="hidden" data-project-track-reorder-target="form">
+                            <input type="hidden" name="ordered_track_uuids" value="" data-project-track-reorder-target="input">
+                        </form>
 
-                    <p class="hidden" aria-live="polite" data-project-track-reorder-target="status"></p>
+                        <p class="hidden" aria-live="polite" data-project-track-reorder-target="status"></p>
+                    {% endif %}
                 </div>
 
-                <form
-                    action="{{ view.addTrackUrl }}"
-                    method="post"
-                    class="mt-4"
-                    data-controller="project-track-picker"
-                    data-project-track-picker-suggestions-url-value="{{ view.addTrackSuggestionsUrl }}"
-                    data-project-track-picker-debounce-ms-value="200"
-                    data-action="submit->project-track-picker#submitForm"
-                >
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
-                        <div class="relative w-full">
-                            <input type="hidden" name="track_uuid" value="" data-project-track-picker-target="hiddenInput">
-                            <input
-                                type="text"
-                                value=""
-                                placeholder="Nach Titel oder Publishing Name suchen"
-                                autocomplete="off"
-                                class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                                data-project-track-picker-target="searchInput"
-                                data-action="input->project-track-picker#handleInput focus->project-track-picker#handleFocus blur->project-track-picker#handleBlur keydown->project-track-picker#handleKeydown"
-                            >
-                            <div
-                                class="absolute left-0 right-0 top-full z-10 mt-1 hidden max-h-64 overflow-y-auto rounded border border-slate-200 bg-white shadow-lg"
-                                data-project-track-picker-target="suggestions"
-                                data-action="mousedown->project-track-picker#handleMouseDown click->project-track-picker#handleClick"
-                            ></div>
-                            <p class="mt-1 text-xs text-slate-500">Suche nach Titel oder Publishing Name.</p>
+                {% if not view.cancelled %}
+                    <form
+                        action="{{ view.addTrackUrl }}"
+                        method="post"
+                        class="mt-4"
+                        data-controller="project-track-picker"
+                        data-project-track-picker-suggestions-url-value="{{ view.addTrackSuggestionsUrl }}"
+                        data-project-track-picker-debounce-ms-value="200"
+                        data-action="submit->project-track-picker#submitForm"
+                    >
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
+                            <div class="relative w-full">
+                                <input type="hidden" name="track_uuid" value="" data-project-track-picker-target="hiddenInput">
+                                <input
+                                    type="text"
+                                    value=""
+                                    placeholder="Nach Titel oder Publishing Name suchen"
+                                    autocomplete="off"
+                                    class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                                    data-project-track-picker-target="searchInput"
+                                    data-action="input->project-track-picker#handleInput focus->project-track-picker#handleFocus blur->project-track-picker#handleBlur keydown->project-track-picker#handleKeydown"
+                                >
+                                <div
+                                    class="absolute left-0 right-0 top-full z-10 mt-1 hidden max-h-64 overflow-y-auto rounded border border-slate-200 bg-white shadow-lg"
+                                    data-project-track-picker-target="suggestions"
+                                    data-action="mousedown->project-track-picker#handleMouseDown click->project-track-picker#handleClick"
+                                ></div>
+                                <p class="mt-1 text-xs text-slate-500">Suche nach Titel oder Publishing Name.</p>
+                            </div>
+                            <button
+                                type="submit"
+                                class="rounded px-4 py-2 text-sm font-medium transition"
+                                data-project-track-picker-target="submitButton"
+                                disabled
+                            >Track hinzufügen</button>
                         </div>
-                        <button
-                            type="submit"
-                            class="rounded px-4 py-2 text-sm font-medium transition"
-                            data-project-track-picker-target="submitButton"
-                            disabled
-                        >Track hinzufügen</button>
-                    </div>
-                </form>
+                    </form>
+                {% endif %}
             </div>
         </div>
     </div>

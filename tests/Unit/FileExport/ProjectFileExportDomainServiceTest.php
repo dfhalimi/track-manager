@@ -12,6 +12,12 @@ use App\ProjectManagement\Facade\Dto\ProjectDto;
 use App\ProjectManagement\Facade\Dto\ProjectTrackAssignmentDto;
 use App\ProjectManagement\Facade\Dto\TrackProjectMembershipDto;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
+use App\TrackManagement\Facade\Dto\TrackChecklistDto;
+use App\TrackManagement\Facade\Dto\TrackDto;
+use App\TrackManagement\Facade\Dto\TrackExportDataDto;
+use App\TrackManagement\Facade\Dto\TrackNamingDto;
+use App\TrackManagement\Facade\Dto\TrackSelectionDto;
+use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 
 describe('ProjectFileExportDomainService', function (): void {
@@ -23,14 +29,15 @@ describe('ProjectFileExportDomainService', function (): void {
 
         $service = new ProjectFileExportDomainService(
             new ProjectManagementFacadeStub(
-                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
+                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', false, DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
                 [
                     new ProjectTrackAssignmentDto('track-1', 1),
                     new ProjectTrackAssignmentDto('track-2', 2),
                     new ProjectTrackAssignmentDto('track-3', 3),
                 ]
             ),
-            $trackExportService
+            $trackExportService,
+            new ExportTrackManagementFacadeStub(['track-1', 'track-2', 'track-3'])
         );
 
         $archive = $service->exportProjectFiles(new ExportProjectFilesInputDto('project-1', 'mp3'));
@@ -55,12 +62,13 @@ describe('ProjectFileExportDomainService', function (): void {
 
         $service = new ProjectFileExportDomainService(
             new ProjectManagementFacadeStub(
-                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
+                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', false, DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
                 [
                     new ProjectTrackAssignmentDto('track-1', 1),
                 ]
             ),
-            $trackExportService
+            $trackExportService,
+            new ExportTrackManagementFacadeStub(['track-1'])
         );
 
         $action = static fn () => $service->exportProjectFiles(new ExportProjectFilesInputDto('project-1', 'mp3'));
@@ -120,6 +128,72 @@ final class ProjectManagementFacadeStub implements ProjectManagementFacadeInterf
     public function removeTrackFromAllProjects(string $trackUuid): void
     {
     }
+
+    public function removeTrackFromActiveProjects(string $trackUuid): void
+    {
+    }
+}
+
+final readonly class ExportTrackManagementFacadeStub implements TrackManagementFacadeInterface
+{
+    /**
+     * @param list<string> $activeTrackUuids
+     */
+    public function __construct(
+        private array $activeTrackUuids
+    ) {
+    }
+
+    public function getTrackByUuid(string $trackUuid): TrackDto
+    {
+        return new TrackDto(
+            $trackUuid,
+            1,
+            'Beat',
+            'Title',
+            null,
+            [120.0],
+            ['C Maj'],
+            null,
+            null,
+            !in_array($trackUuid, $this->activeTrackUuids, true),
+            DateAndTimeService::getDateTimeImmutable(),
+            DateAndTimeService::getDateTimeImmutable()
+        );
+    }
+
+    public function getTrackByTrackNumber(int $trackNumber): ?TrackDto
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getTrackExportData(string $trackUuid): TrackExportDataDto
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getTrackNamingData(string $trackUuid): TrackNamingDto
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function trackExists(string $trackUuid): bool
+    {
+        return in_array($trackUuid, $this->activeTrackUuids, true);
+    }
+
+    public function getChecklistByTrackUuid(string $trackUuid): TrackChecklistDto
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getAllTracksForSelection(): array
+    {
+        return array_map(
+            static fn (string $trackUuid): TrackSelectionDto => new TrackSelectionDto($trackUuid, 1, 'Beat', 'Title', null),
+            $this->activeTrackUuids
+        );
+    }
 }
 
 final class TrackFileExportDomainServiceStub implements TrackFileExportDomainServiceInterface
@@ -145,7 +219,7 @@ final class TrackFileExportDomainServiceStub implements TrackFileExportDomainSer
         throw new ValueError('Track has no current audio file to export.');
     }
 
-    public function buildExportFilename(App\TrackManagement\Facade\Dto\TrackExportDataDto $trackExportData, string $targetFormat): string
+    public function buildExportFilename(TrackExportDataDto $trackExportData, string $targetFormat): string
     {
         return sprintf('%s.%s', $trackExportData->title, $targetFormat);
     }

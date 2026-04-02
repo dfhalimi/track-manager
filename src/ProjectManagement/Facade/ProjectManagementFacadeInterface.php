@@ -31,4 +31,6 @@ interface ProjectManagementFacadeInterface
     public function getProjectsByTrackUuid(string $trackUuid): array;
 
     public function removeTrackFromAllProjects(string $trackUuid): void;
+
+    public function removeTrackFromActiveProjects(string $trackUuid): void;
 }

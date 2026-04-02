@@ -20,29 +20,35 @@
                     <p><span class="font-medium">Typ:</span> {{ item.trackFile.mimeType }}</p>
                     <p><span class="font-medium">Hochgeladen:</span> {{ item.trackFile.uploadedAt }}</p>
                     {% include '@trackmanagement.presentation/_audio_player.html.twig' with { playbackUrl: item.trackFile.playbackUrl } only %}
-                    <form
-                        action="{{ item.trackFile.replaceUrl }}"
-                        method="post"
-                        enctype="multipart/form-data"
-                        class="space-y-2"
-                        data-controller="file-upload"
-                    >
-                        <input type="hidden" name="redirect_to" value="{{ currentUrl }}">
-                        <input
-                            type="file"
-                            name="track_file"
-                            accept=".mp3,.wav,audio/mpeg,audio/wav"
-                            class="hidden"
-                            data-file-upload-target="input"
-                            data-action="change->file-upload#submitOnChange"
+                    {% if not item.cancelled %}
+                        <form
+                            action="{{ item.trackFile.replaceUrl }}"
+                            method="post"
+                            enctype="multipart/form-data"
+                            class="space-y-2"
+                            data-controller="file-upload"
                         >
-                        <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei ersetzen</button>
-                        <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
-                    </form>
+                            <input type="hidden" name="redirect_to" value="{{ currentUrl }}">
+                            <input
+                                type="file"
+                                name="track_file"
+                                accept=".mp3,.wav,audio/mpeg,audio/wav"
+                                class="hidden"
+                                data-file-upload-target="input"
+                                data-action="change->file-upload#submitOnChange"
+                            >
+                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei ersetzen</button>
+                            <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
+                        </form>
+                    {% else %}
+                        <p class="text-xs text-slate-500">Archivierte Tracks sind schreibgeschützt. Bestehende Dateien bleiben nur lesbar.</p>
+                    {% endif %}
                 </div>
             </div>
         </dialog>
     </div>
+{% elseif item.cancelled %}
+    <span class="text-slate-400" title="Archivierte Tracks können keine neuen Dateien erhalten.">Nicht möglich</span>
 {% else %}
     <form action="{{ item.uploadUrl }}" method="post" enctype="multipart/form-data" class="inline-block" data-controller="file-upload">
         <input type="hidden" name="redirect_to" value="{{ currentUrl }}">

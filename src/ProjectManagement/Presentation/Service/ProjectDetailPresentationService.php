@@ -82,6 +82,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $project->title,
             $project->categoryName,
             $project->createdAt->format('d.m.Y H:i'),
+            $project->cancelled,
             $hasExportableTracks,
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'mp3']),
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'wav']),
@@ -101,7 +102,8 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $this->urlGenerator->generate('project_management.presentation.index'),
             $this->urlGenerator->generate('track_management.presentation.index'),
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),
-            $this->urlGenerator->generate('project_management.presentation.delete', ['projectUuid' => $projectUuid]),
+            $this->urlGenerator->generate('project_management.presentation.cancel', ['projectUuid' => $projectUuid]),
+            $this->urlGenerator->generate('project_management.presentation.reactivate', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.tracks.add', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.tracks.reorder', ['projectUuid' => $projectUuid])
         );
@@ -109,6 +111,10 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
 
     public function buildAvailableTrackSuggestions(string $projectUuid, ?string $query, int $limit): array
     {
+        if ($this->projectManagementFacade->getProjectByUuid($projectUuid)->cancelled) {
+            return [];
+        }
+
         $searchQuery = trim((string) $query);
         if ($searchQuery === '') {
             return [];

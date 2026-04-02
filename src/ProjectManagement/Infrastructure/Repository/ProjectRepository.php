@@ -82,6 +82,15 @@ class ProjectRepository extends ServiceEntityRepository implements ProjectReposi
                 ->setParameter('categoryFilter', ProjectCategoryCatalog::normalizeStorageValue($categoryFilter));
         }
 
+        $cancelledFilter = trim((string) ($filter->cancelledFilter ?? ''));
+        if ($cancelledFilter === 'active') {
+            $queryBuilder->andWhere('project.cancelled = false');
+        }
+
+        if ($cancelledFilter === 'cancelled') {
+            $queryBuilder->andWhere('project.cancelled = true');
+        }
+
         $sortBy = match ($filter->sortBy) {
             'title'     => 'project.title',
             'createdAt' => 'project.createdAt',
