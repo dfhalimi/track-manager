@@ -51,6 +51,18 @@ class ProjectRepository extends ServiceEntityRepository implements ProjectReposi
         return $this->find($projectUuid);
     }
 
+    public function findByNormalizedTitle(string $normalizedTitle): ?Project
+    {
+        $queryBuilder = $this->createQueryBuilder('project')
+            ->andWhere('project.normalizedTitle = :normalizedTitle')
+            ->setParameter('normalizedTitle', $normalizedTitle)
+            ->setMaxResults(1);
+
+        $project = $queryBuilder->getQuery()->getOneOrNullResult();
+
+        return $project instanceof Project ? $project : null;
+    }
+
     public function findAllByFilter(ProjectListFilterDto $filter): array
     {
         $queryBuilder = $this->createQueryBuilder('project')

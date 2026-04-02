@@ -17,6 +17,8 @@ interface ProjectRepositoryInterface
 
     public function findByUuid(string $projectUuid): ?Project;
 
+    public function findByNormalizedTitle(string $normalizedTitle): ?Project;
+
     /**
      * @return list<Project>
      */

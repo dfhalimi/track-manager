@@ -72,6 +72,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $project->uuid,
             $project->title,
             $project->categoryName,
+            $project->createdAt->format('d.m.Y H:i'),
             $trackItems,
             $availableTracks,
             $mediaAsset === null ? null : new ProjectMediaAssetViewDto(
