@@ -1,0 +1,147 @@
+{% extends '@common.presentation/base_appshell.html.twig' %}
+
+{% block body %}
+    <div class="mx-auto max-w-6xl space-y-6 p-6">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+            <a href="{{ view.backToListUrl }}" class="text-slate-600 underline">Zur Projektliste</a>
+            <a href="{{ view.tracksIndexUrl }}" class="text-slate-600 underline">Zur Trackliste</a>
+        </div>
+
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="text-sm text-slate-500">{{ view.categoryName }}</p>
+                <h1 class="text-3xl font-semibold text-slate-900">{{ view.title }}</h1>
+            </div>
+            <div class="flex gap-3">
+                <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
+                <form method="post" action="{{ view.deleteUrl }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_project_' ~ view.uuid) }}">
+                    <button type="submit" class="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white">Löschen</button>
+                </form>
+            </div>
+        </div>
+
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="rounded border px-4 py-3 text-sm {{ type == 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+            <div class="rounded border border-slate-200 bg-white p-5">
+                <h2 class="mb-4 text-lg font-semibold text-slate-900">Projektbild</h2>
+                {% if view.mediaAsset %}
+                    <div class="space-y-4">
+                        <div class="aspect-square overflow-hidden rounded border border-slate-200 bg-slate-100">
+                            <img src="{{ view.mediaAsset.previewUrl }}" alt="Projektbild {{ view.title }}" class="h-full w-full object-cover">
+                        </div>
+                        <div class="space-y-1 text-sm text-slate-700">
+                            <p><span class="font-medium">Datei:</span> {{ view.mediaAsset.originalFilename }}</p>
+                            <p><span class="font-medium">Typ:</span> {{ view.mediaAsset.mimeType }}</p>
+                            <p><span class="font-medium">Größe:</span> {{ view.mediaAsset.dimensionsLabel }}</p>
+                            <p><span class="font-medium">Hochgeladen:</span> {{ view.mediaAsset.uploadedAt }}</p>
+                        </div>
+                        <form
+                            action="{{ view.mediaAsset.replaceUrl }}"
+                            method="post"
+                            enctype="multipart/form-data"
+                            class="space-y-2"
+                            data-controller="file-upload"
+                        >
+                            <input
+                                type="file"
+                                name="project_image"
+                                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                                class="hidden"
+                                data-file-upload-target="input"
+                                data-action="change->file-upload#submitOnChange"
+                            >
+                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Projektbild ersetzen</button>
+                        </form>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="{{ view.mediaAsset.exportJpgUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export JPG 3000x3000</a>
+                            <a href="{{ view.mediaAsset.exportPngUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export PNG 3000x3000</a>
+                        </div>
+                        <p class="text-xs text-slate-500">Die Vorschau zeigt das Cover in quadratischer Spotify-Darstellung.</p>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-slate-600">Dieses Projekt hat aktuell noch kein Bild.</p>
+                {% endif %}
+            </div>
+
+            <div class="rounded border border-slate-200 bg-white p-5">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">Tracks im Projekt</h2>
+                        <p class="text-sm text-slate-600">Tracks können per Drag-and-Drop neu angeordnet werden.</p>
+                    </div>
+                    <span class="text-sm text-slate-600">{{ view.tracks|length }} Tracks</span>
+                </div>
+
+                <div
+                    class="space-y-3"
+                    data-controller="project-track-reorder"
+                    data-action="dragover->project-track-reorder#dragOver drop->project-track-reorder#drop"
+                >
+                    {% for item in view.tracks %}
+                        <div
+                            class="group rounded border border-slate-200 p-3 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                            draggable="true"
+                            data-project-track-reorder-target="item"
+                            data-item-uuid="{{ item.trackUuid }}"
+                            data-action="dragstart->project-track-reorder#startDrag dragend->project-track-reorder#endDrag"
+                        >
+                            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span
+                                        class="inline-flex h-7 w-7 shrink-0 items-center justify-center self-center text-slate-500 cursor-pointer select-none leading-none transition group-hover:text-slate-600"
+                                        title="Ziehen zum Sortieren"
+                                        data-drag-handle
+                                    >
+                                        <svg class="block h-4 w-4" viewBox="0 0 8 12" fill="currentColor" aria-hidden="true">
+                                            <circle cx="2" cy="2" r="1"></circle>
+                                            <circle cx="6" cy="2" r="1"></circle>
+                                            <circle cx="2" cy="6" r="1"></circle>
+                                            <circle cx="6" cy="6" r="1"></circle>
+                                            <circle cx="2" cy="10" r="1"></circle>
+                                            <circle cx="6" cy="10" r="1"></circle>
+                                        </svg>
+                                        <span class="sr-only">Ziehen</span>
+                                    </span>
+                                    <div>
+                                        <p class="text-sm font-medium text-slate-900">{{ item.position }}. {{ item.label }}</p>
+                                        <a href="{{ item.showUrl }}" class="text-xs text-slate-600 underline">Track ansehen</a>
+                                    </div>
+                                </div>
+
+                                <form action="{{ item.removeUrl }}" method="post">
+                                    <button type="submit" class="rounded border border-red-300 px-3 py-2 text-sm font-medium text-red-700">Entfernen</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="rounded border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">Noch keine Tracks im Projekt.</div>
+                    {% endfor %}
+
+                    <form action="{{ view.reorderUrl }}" method="post" class="hidden" data-project-track-reorder-target="form">
+                        <input type="hidden" name="ordered_track_uuids" value="" data-project-track-reorder-target="input">
+                    </form>
+
+                    <p class="hidden" aria-live="polite" data-project-track-reorder-target="status"></p>
+                </div>
+
+                <form action="{{ view.addTrackUrl }}" method="post" class="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <select name="track_uuid" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                            <option value="">Track auswählen</option>
+                        {% for trackOption in view.availableTracks %}
+                            <option value="{{ trackOption.trackUuid }}">{{ trackOption.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Track hinzufügen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

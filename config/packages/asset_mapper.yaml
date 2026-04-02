@@ -1,0 +1,23 @@
+framework:
+    asset_mapper:
+        # The paths to make available to the asset mapper.
+        paths:
+            - assets/
+            - src/ProjectManagement/Presentation/Resources/assets/
+            - src/TrackManagement/Presentation/Resources/assets/
+            - src/FileImport/Presentation/Resources/assets/
+            - src/FileExport/Presentation/Resources/assets/
+        missing_import_mode: strict
+
+sensiolabs_typescript:
+    source_dir:
+        - "%kernel.project_dir%/assets/"
+        - "%kernel.project_dir%/src/ProjectManagement/Presentation/Resources/assets/"
+        - "%kernel.project_dir%/src/TrackManagement/Presentation/Resources/assets/"
+        - "%kernel.project_dir%/src/FileImport/Presentation/Resources/assets/"
+        - "%kernel.project_dir%/src/FileExport/Presentation/Resources/assets/"
+
+when@prod:
+    framework:
+        asset_mapper:
+            missing_import_mode: warn

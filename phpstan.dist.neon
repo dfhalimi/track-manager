@@ -1,0 +1,18 @@
+includes:
+    - vendor/enterprise-tooling-for-symfony/shared-bundle/config/phpstan.app.dist.neon
+
+parameters:
+    # Use container cache directory for better performance in Docker
+    # This avoids slow writes to the mounted project directory
+    tmpDir: /tmp/container-home/.cache/phpstan
+    paths:
+        - bin/
+        - config/
+        - public/
+        - src/
+        - tests/
+        - migrations/
+    excludePaths:
+        analyse:
+            - tests/Architecture/*
+            - config/reference.php

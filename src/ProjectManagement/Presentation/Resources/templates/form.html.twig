@@ -1,0 +1,48 @@
+{% extends '@common.presentation/base_appshell.html.twig' %}
+
+{% block body %}
+    <div class="mx-auto max-w-3xl space-y-6 p-6">
+        <div>
+            <h1 class="text-3xl font-semibold text-slate-900">{{ view.isEditMode ? 'Projekt bearbeiten' : 'Projekt erstellen' }}</h1>
+            <p class="text-sm text-slate-600">Lege Titel, Kategorie und Cover für das Projekt fest.</p>
+        </div>
+
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="rounded border px-4 py-3 text-sm {{ type == 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <form method="post" action="{{ view.formAction }}" enctype="multipart/form-data" class="space-y-4 rounded border border-slate-200 bg-white p-6">
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Projekt-Titel</label>
+                    <input type="text" name="title" value="{{ view.title }}" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Kategorie</label>
+                    <input type="text" name="category_name" value="{{ view.categoryName }}" list="project-category-options" autocomplete="off" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                    <datalist id="project-category-options">
+                        {% for categoryOption in view.categoryOptions %}
+                            <option value="{{ categoryOption }}"></option>
+                        {% endfor %}
+                    </datalist>
+                    <p class="mt-1 text-xs text-slate-500">Bestehende Kategorien können wiederverwendet oder direkt neu angelegt werden.</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700">{{ view.isEditMode ? 'Projektbild ersetzen (optional)' : 'Projektbild (optional)' }}</label>
+                <input type="file" name="project_image" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                <p class="mt-1 text-xs text-slate-500">Erlaubte Formate: JPG oder PNG. Du kannst das Bild direkt mit anlegen oder später ergänzen und dann als quadratisches Spotify-Cover exportieren.</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">{{ view.submitLabel }}</button>
+                <a href="{{ view.cancelUrl }}" class="text-sm text-slate-600 underline">Abbrechen</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

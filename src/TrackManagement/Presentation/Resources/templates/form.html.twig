@@ -1,0 +1,115 @@
+{% extends '@common.presentation/base_appshell.html.twig' %}
+
+{% block body %}
+    <div class="mx-auto max-w-3xl space-y-6 p-6">
+        <div>
+            <h1 class="text-3xl font-semibold text-slate-900">{{ view.isEditMode ? 'Track bearbeiten' : 'Track erstellen' }}</h1>
+            <p class="text-sm text-slate-600">TrackNumber {{ view.trackNumber }}</p>
+        </div>
+
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="rounded border px-4 py-3 text-sm {{ type == 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <form
+            method="post"
+            action="{{ view.formAction }}"
+            class="space-y-4 rounded border border-slate-200 bg-white p-6"
+            data-controller="track-title"
+            data-action="submit->track-title#prepareSubmit"
+            data-track-title-track-number-value="{{ view.trackNumber }}"
+            data-track-title-edit-mode-value="{{ view.isEditMode ? 'true' : 'false' }}"
+            data-track-title-original-beat-name-value="{{ view.beatName }}"
+            data-track-title-original-bpms-value="{{ view.bpms|json_encode|e('html_attr') }}"
+            data-track-title-original-musical-key-value="{{ view.musicalKey }}"
+            data-track-title-suggested-title-value="{{ view.suggestedTitle }}"
+        >
+            <input type="hidden" name="replace_title_with_suggestion" value="0" data-track-title-target="replaceFlag">
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Beat Name</label>
+                    <input type="text" name="beat_name" value="{{ view.beatName }}" class="w-full rounded border border-slate-300 px-3 py-2 text-sm" data-track-title-target="beatName" data-action="input->track-title#updateSuggestion">
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Title</label>
+                    <input type="text" name="title" value="{{ view.title }}" class="w-full rounded border border-slate-300 px-3 py-2 text-sm" data-track-title-target="title" data-action="input->track-title#markManuallyEdited">
+                    <p class="mt-1 text-xs text-slate-500">Vorschlag: <span data-track-title-target="suggestionLabel">{{ view.suggestedTitle }}</span></p>
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Publishing Name</label>
+                    <input type="text" name="publishing_name" value="{{ view.publishingName }}" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                    <p class="mt-1 text-xs text-slate-500">Optionaler finaler Songname für das spätere Release.</p>
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Musical Key</label>
+                    <input type="text" name="musical_key" value="{{ view.musicalKey }}" list="track-musical-key-options" autocomplete="off" class="w-full rounded border border-slate-300 px-3 py-2 text-sm" data-track-title-target="musicalKey" data-action="input->track-title#updateSuggestion">
+                    <datalist id="track-musical-key-options">
+                        {% for musicalKeyOption in view.musicalKeyOptions %}
+                            <option value="{{ musicalKeyOption }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">ISRC</label>
+                    <input type="text" name="isrc" value="{{ view.isrc }}" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="mb-1 block text-sm font-medium text-slate-700">BPMs</label>
+                    <div class="space-y-2" data-track-title-target="bpmList">
+                        {% for bpm in view.bpms %}
+                            <input type="number" name="bpms[]" value="{{ bpm }}" min="1" class="w-full rounded border border-slate-300 px-3 py-2 text-sm cursor-text" data-action="input->track-title#updateSuggestion">
+                        {% endfor %}
+                    </div>
+                    <template data-track-title-target="bpmTemplate">
+                        <input type="number" name="bpms[]" value="" min="1" class="w-full rounded border border-slate-300 px-3 py-2 text-sm cursor-text" data-action="input->track-title#updateSuggestion">
+                    </template>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900" data-action="track-title#addBpm">+ BPM hinzufügen</button>
+                        <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900" data-track-title-target="removeBpmButton" data-action="track-title#removeLastBpm">Letzte BPM entfernen</button>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500">Mehrere BPMs werden in derselben Reihenfolge in den Title übernommen.</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700">Notizen</label>
+                <textarea name="notes" rows="5" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">{{ view.notes }}</textarea>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">{{ view.submitLabel }}</button>
+                <a href="{{ view.cancelUrl }}" class="text-sm text-slate-600 underline">Abbrechen</a>
+            </div>
+
+            <dialog class="fixed left-1/2 top-1/2 m-0 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded border border-slate-200 p-0 shadow-xl backdrop:bg-slate-900/30" data-track-title-target="modal">
+                <div class="space-y-4 p-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">Title-Anpassung</h2>
+                        <p class="mt-1 text-sm text-slate-600">Beat Name, BPMs oder Musical Key wurden geändert. Wie soll gespeichert werden?</p>
+                    </div>
+
+                    <div class="rounded border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Aktueller Title</p>
+                        <p class="mt-1 text-sm text-slate-900" data-track-title-target="modalCurrentTitle"></p>
+                    </div>
+
+                    <div class="rounded border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Neuer Vorschlag</p>
+                        <p class="mt-1 text-sm text-slate-900" data-track-title-target="modalSuggestedTitle"></p>
+                    </div>
+
+                    <div class="flex flex-wrap justify-end gap-2">
+                        <button type="button" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900" data-action="track-title#cancelTitleDecision">Abbrechen</button>
+                        <button type="button" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900" data-action="track-title#submitKeepingCurrentTitle">Ohne Title-Anpassung speichern</button>
+                        <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="track-title#submitWithSuggestedTitle">Title anpassen und speichern</button>
+                    </div>
+                </div>
+            </dialog>
+        </form>
+    </div>
+{% endblock %}
