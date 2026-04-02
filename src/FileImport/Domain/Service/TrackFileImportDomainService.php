@@ -18,6 +18,8 @@ use ValueError;
 
 readonly class TrackFileImportDomainService implements TrackFileImportDomainServiceInterface
 {
+    private const int MAX_AUDIO_FILE_SIZE_BYTES = 250 * 1024 * 1024;
+
     public function __construct(
         private TrackFileRepositoryInterface   $trackFileRepository,
         private TrackFileStorageInterface      $trackFileStorage,
@@ -97,6 +99,8 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
 
     public function assertSupportedAudioFile(UploadedFile $file): void
     {
+        $this->assertAudioFileSize($file);
+
         $extension = $this->resolveExtension($file);
 
         if (!in_array($extension, ['mp3', 'wav'], true)) {
@@ -120,6 +124,21 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
     {
         if (!$this->trackManagementFacade->trackExists($trackUuid)) {
             throw new ValueError('Target track does not exist.');
+        }
+    }
+
+    private function assertAudioFileSize(UploadedFile $file): void
+    {
+        $fileSize = (int) $file->getSize();
+
+        if ($fileSize <= 0) {
+            return;
+        }
+
+        if ($fileSize > self::MAX_AUDIO_FILE_SIZE_BYTES) {
+            throw new ValueError(
+                sprintf('Die Datei ist zu groß. Erlaubt sind maximal %d MB.', self::MAX_AUDIO_FILE_SIZE_BYTES / 1024 / 1024)
+            );
         }
     }
 

@@ -82,12 +82,15 @@
                                 data-action="change->file-upload#submitOnChange"
                             >
                             <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei ersetzen</button>
-                            <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV</p>
+                            <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
                         </form>
                         <div class="flex gap-2">
                             <a href="{{ view.trackFile.exportMp3Url }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export MP3</a>
                             <a href="{{ view.trackFile.exportWavUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export WAV</a>
                         </div>
+                        {% if view.trackFile.originalFilename|lower ends with '.mp3' %}
+                            <p class="text-xs text-amber-700">Hinweis: Ein WAV-Export aus einer MP3 verbessert die Audioqualität nicht. Er ist nur für Kompatibilität mit WAV-basierten Workflows gedacht.</p>
+                        {% endif %}
                     </div>
                 {% else %}
                     <form
@@ -107,7 +110,7 @@
                             data-action="change->file-upload#submitOnChange"
                         >
                         <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei hochladen</button>
-                        <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV</p>
+                        <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
                     </form>
                 {% endif %}
             </div>
