@@ -19,7 +19,7 @@
             {% endfor %}
         {% endfor %}
 
-        <form method="post" action="{{ view.formAction }}" enctype="multipart/form-data" class="space-y-4 rounded border border-slate-200 bg-white p-6">
+        <form method="post" action="{{ view.formAction }}" enctype="multipart/form-data" class="space-y-4 rounded border border-slate-200 bg-white p-6" data-controller="project-form">
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">Projekt-Titel</label>
@@ -35,6 +35,23 @@
                     </datalist>
                     <p class="mt-1 text-xs text-slate-500">Bestehende Kategorien können wiederverwendet oder direkt neu angelegt werden.</p>
                 </div>
+            </div>
+
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-700">Interpreten</label>
+                <div class="space-y-2" data-project-form-target="artistList">
+                    {% for artist in view.artists %}
+                        <input type="text" name="artists[]" value="{{ artist }}" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                    {% endfor %}
+                </div>
+                <template data-project-form-target="artistTemplate">
+                    <input type="text" name="artists[]" value="" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                </template>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900" data-action="project-form#addArtist">+ Interpreten hinzufügen</button>
+                    <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900" data-project-form-target="removeArtistButton" data-action="project-form#removeLastArtist">Letzten Interpreten entfernen</button>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Optional. Du kannst keinen, einen oder mehrere Interpreten hinterlegen.</p>
             </div>
 
             <div>

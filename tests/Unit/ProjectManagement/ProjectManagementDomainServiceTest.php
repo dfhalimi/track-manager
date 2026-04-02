@@ -119,6 +119,21 @@ describe('ProjectManagementDomainService', function (): void {
 
         expect($action)->toThrow(ValueError::class, 'Es existiert bereits ein Projekt mit diesem Namen.');
     });
+
+    it('normalizes optional project artists and removes duplicates', function (): void {
+        $service = new ProjectManagementDomainService(
+            new InMemoryProjectRepository(),
+            new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
+            new InMemoryProjectTrackAssignmentRepository(),
+            new TrackManagementFacadeStub([])
+        );
+
+        $project = $service->createProject(
+            new CreateProjectInputDto('Spring Tape', 'single', ['  Artist One ', '', 'ARTIST ONE', 'Artist  Two'])
+        );
+
+        expect($project->getArtists())->toBe(['Artist One', 'Artist Two']);
+    });
 });
 
 function createProjectCategory(string $uuid, string $name, string $normalizedName): ProjectCategory

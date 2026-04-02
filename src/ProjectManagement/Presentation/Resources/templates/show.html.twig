@@ -78,7 +78,18 @@
                         <h2 class="text-lg font-semibold text-slate-900">Tracks im Projekt</h2>
                         <p class="text-sm text-slate-600">Tracks können per Drag-and-Drop neu angeordnet werden.</p>
                     </div>
-                    <span class="text-sm text-slate-600">{{ view.tracks|length }} Tracks</span>
+                    <div class="flex items-center gap-3">
+                        <div class="flex gap-2">
+                            {% if view.hasExportableTracks %}
+                                <a href="{{ view.exportAllMp3Url }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Alle als MP3</a>
+                                <a href="{{ view.exportAllWavUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Alle als WAV</a>
+                            {% else %}
+                                <button type="button" class="cursor-not-allowed rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-400" disabled>Alle als MP3</button>
+                                <button type="button" class="cursor-not-allowed rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-400" disabled>Alle als WAV</button>
+                            {% endif %}
+                        </div>
+                        <span class="text-sm text-slate-600">{{ view.tracks|length }} Tracks</span>
+                    </div>
                 </div>
 
                 <div
@@ -117,9 +128,47 @@
                                     </div>
                                 </div>
 
-                                <form action="{{ item.removeUrl }}" method="post">
-                                    <button type="submit" class="rounded border border-red-300 px-3 py-2 text-sm font-medium text-red-700">Entfernen</button>
-                                </form>
+                                <div class="flex items-center gap-2">
+                                    {% if item.hasAudioFile %}
+                                        <a href="{{ item.exportMp3Url }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">MP3</a>
+                                        <a href="{{ item.exportWavUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">WAV</a>
+                                    {% else %}
+                                        <div class="group relative">
+                                            <button
+                                                type="button"
+                                                class="inline-flex h-10 w-10 items-center justify-center rounded border border-slate-200 text-slate-400"
+                                                aria-label="Keine Audio-Datei vorhanden"
+                                            >
+                                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path d="M10 9v6a2 2 0 1 1-2-2"></path>
+                                                    <path d="M10 9l8-2v6"></path>
+                                                    <path d="M18 7v8a2 2 0 1 1-2-2"></path>
+                                                    <path d="M4 4l16 16"></path>
+                                                </svg>
+                                            </button>
+                                            <div class="pointer-events-none absolute right-0 top-full z-10 mt-2 hidden w-52 rounded bg-slate-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
+                                                Dieser Track hat noch keine Audio-Datei.
+                                            </div>
+                                        </div>
+                                    {% endif %}
+
+                                    <form action="{{ item.removeUrl }}" method="post">
+                                        <button
+                                            type="submit"
+                                            class="inline-flex h-10 w-10 items-center justify-center rounded border border-red-300 text-red-700 transition hover:bg-red-50"
+                                            aria-label="Track aus Projekt entfernen"
+                                            title="Track entfernen"
+                                        >
+                                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                <path d="M3 6h18"></path>
+                                                <path d="M8 6V4h8v2"></path>
+                                                <path d="M19 6l-1 14H6L5 6"></path>
+                                                <path d="M10 11v6"></path>
+                                                <path d="M14 11v6"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     {% else %}
@@ -133,14 +182,41 @@
                     <p class="hidden" aria-live="polite" data-project-track-reorder-target="status"></p>
                 </div>
 
-                <form action="{{ view.addTrackUrl }}" method="post" class="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <select name="track_uuid" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
-                            <option value="">Track auswählen</option>
-                        {% for trackOption in view.availableTracks %}
-                            <option value="{{ trackOption.trackUuid }}">{{ trackOption.label }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Track hinzufügen</button>
+                <form
+                    action="{{ view.addTrackUrl }}"
+                    method="post"
+                    class="mt-4"
+                    data-controller="project-track-picker"
+                    data-project-track-picker-suggestions-url-value="{{ view.addTrackSuggestionsUrl }}"
+                    data-project-track-picker-debounce-ms-value="200"
+                    data-action="submit->project-track-picker#submitForm"
+                >
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
+                        <div class="relative w-full">
+                            <input type="hidden" name="track_uuid" value="" data-project-track-picker-target="hiddenInput">
+                            <input
+                                type="text"
+                                value=""
+                                placeholder="Nach Titel oder Publishing Name suchen"
+                                autocomplete="off"
+                                class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                                data-project-track-picker-target="searchInput"
+                                data-action="input->project-track-picker#handleInput focus->project-track-picker#handleFocus blur->project-track-picker#handleBlur keydown->project-track-picker#handleKeydown"
+                            >
+                            <div
+                                class="absolute left-0 right-0 top-full z-10 mt-1 hidden max-h-64 overflow-y-auto rounded border border-slate-200 bg-white shadow-lg"
+                                data-project-track-picker-target="suggestions"
+                                data-action="mousedown->project-track-picker#handleMouseDown click->project-track-picker#handleClick"
+                            ></div>
+                            <p class="mt-1 text-xs text-slate-500">Suche nach Titel oder Publishing Name.</p>
+                        </div>
+                        <button
+                            type="submit"
+                            class="rounded px-4 py-2 text-sm font-medium transition"
+                            data-project-track-picker-target="submitButton"
+                            disabled
+                        >Track hinzufügen</button>
+                    </div>
                 </form>
             </div>
         </div>

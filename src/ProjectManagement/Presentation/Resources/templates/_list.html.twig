@@ -6,6 +6,15 @@
                     <div class="min-w-0">
                         <p class="text-sm font-medium text-slate-900">{{ item.title }}</p>
                         <p class="text-xs uppercase tracking-wide text-slate-500">{{ item.categoryName }}</p>
+                        <div class="mt-2 space-y-1 text-xs text-slate-600">
+                            {% if item.artists is empty %}
+                                <p>-</p>
+                            {% else %}
+                                {% for artist in item.artists %}
+                                    <p>{{ artist }}</p>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
                     </div>
                     <span class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{{ item.trackCount }} Tracks</span>
                 </div>
@@ -31,15 +40,17 @@
     <div class="hidden overflow-x-auto rounded border border-slate-200 bg-white md:block">
         <table class="min-w-[42rem] w-full table-fixed divide-y divide-slate-200 text-sm lg:min-w-0">
             <colgroup>
-                <col class="w-[56%]">
-                <col class="w-[20%]">
-                <col class="w-[16%]">
+                <col class="w-[34%]">
+                <col class="w-[18%]">
+                <col class="w-[28%]">
+                <col class="w-[12%]">
                 <col class="w-[8%]">
             </colgroup>
             <thead class="bg-slate-50">
                 <tr>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">Titel</th>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">Kategorie</th>
+                    <th class="px-3 py-3 text-left font-medium text-slate-600">Interpreten</th>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">Tracks</th>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">Aktionen</th>
                 </tr>
@@ -49,6 +60,17 @@
                     <tr>
                         <td class="px-3 py-3 font-medium text-slate-900">{{ item.title }}</td>
                         <td class="px-3 py-3 text-slate-700">{{ item.categoryName }}</td>
+                        <td class="px-3 py-3 text-slate-700">
+                            <div class="space-y-1">
+                                {% if item.artists is empty %}
+                                    <p>-</p>
+                                {% else %}
+                                    {% for artist in item.artists %}
+                                        <p>{{ artist }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </td>
                         <td class="px-3 py-3 text-slate-700">{{ item.trackCount }}</td>
                         <td class="px-3 py-3">
                             <div class="flex justify-end gap-2">
@@ -67,7 +89,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="4" class="px-4 py-8 text-center text-slate-500">Noch keine Projekte vorhanden.</td>
+                        <td colspan="5" class="px-4 py-8 text-center text-slate-500">Noch keine Projekte vorhanden.</td>
                     </tr>
                 {% endfor %}
             </tbody>
