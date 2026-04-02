@@ -10,7 +10,9 @@ readonly class TrackListFilterDto
         public ?string $searchQuery,
         public ?string $statusFilter,
         public string  $sortBy,
-        public string  $sortDirection
+        public string  $sortDirection,
+        public int     $page,
+        public int     $perPage
     ) {
     }
 }

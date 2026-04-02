@@ -13,6 +13,7 @@ use App\TrackManagement\Presentation\Service\TrackDetailPresentationServiceInter
 use App\TrackManagement\Presentation\Service\TrackFormPresentationServiceInterface;
 use App\TrackManagement\Presentation\Service\TrackOverviewPresentationServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -37,11 +38,42 @@ final class TrackController extends AbstractController
             $request->query->getString('q', ''),
             $request->query->getString('status', ''),
             $request->query->getString('sortBy', 'updatedAt'),
-            $request->query->getString('sortDirection', 'DESC')
+            $request->query->getString('sortDirection', 'DESC'),
+            $request->query->getInt('page', 1),
+            $request->query->getInt('perPage', 25)
         );
 
         return $this->render('@trackmanagement.presentation/index.html.twig', [
             'view' => $viewDto,
+        ]);
+    }
+
+    #[Route(path: '/tracks/list', name: 'track_management.presentation.list', methods: [Request::METHOD_GET])]
+    public function listAction(Request $request): Response
+    {
+        return $this->render('@trackmanagement.presentation/_list.html.twig', [
+            'view' => $this->trackOverviewPresentationService->buildTrackListViewDto(
+                $request->query->getString('q', ''),
+                $request->query->getString('status', ''),
+                $request->query->getString('sortBy', 'updatedAt'),
+                $request->query->getString('sortDirection', 'DESC'),
+                $request->query->getInt('page', 1),
+                $request->query->getInt('perPage', 25)
+            ),
+        ]);
+    }
+
+    #[Route(path: '/tracks/suggestions', name: 'track_management.presentation.suggestions', methods: [Request::METHOD_GET])]
+    public function suggestionsAction(Request $request): JsonResponse
+    {
+        return $this->json([
+            'suggestions' => $this->trackOverviewPresentationService->buildTrackSearchSuggestions(
+                $request->query->getString('q', ''),
+                $request->query->getString('status', ''),
+                $request->query->getString('sortBy', 'updatedAt'),
+                $request->query->getString('sortDirection', 'DESC'),
+                10
+            ),
         ]);
     }
 

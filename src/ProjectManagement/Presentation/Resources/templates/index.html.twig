@@ -1,7 +1,15 @@
 {% extends '@common.presentation/base_appshell.html.twig' %}
 
 {% block body %}
-    <div class="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
+    <div
+        class="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6"
+        data-controller="live-search"
+        data-action="click->live-search#handleClick"
+        data-live-search-index-url-value="{{ view.indexUrl }}"
+        data-live-search-list-url-value="{{ view.listUrl }}"
+        data-live-search-suggestions-url-value="{{ view.suggestionsUrl }}"
+        data-live-search-debounce-ms-value="200"
+    >
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="space-y-2">
                 <a href="{{ view.tracksIndexUrl }}" class="text-sm text-slate-600 underline">Zur Trackliste</a>
@@ -21,85 +29,62 @@
             {% endfor %}
         {% endfor %}
 
-        <form method="get" class="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-4 md:gap-4">
-            <input type="text" name="q" value="{{ view.searchQuery }}" placeholder="Suche nach Projekt oder Kategorie" class="rounded border border-slate-300 px-3 py-2 text-sm">
-            <select name="category" class="rounded border border-slate-300 px-3 py-2 text-sm">
+        <form
+            method="get"
+            action="{{ view.indexUrl }}"
+            class="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-5 md:gap-4"
+            data-live-search-target="form"
+            data-action="submit->live-search#submitForm"
+        >
+            <input type="hidden" name="page" value="{{ view.currentPage }}" data-live-search-target="page">
+
+            <div class="relative">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ view.searchQuery }}"
+                    placeholder="Suche nach Projekt oder Kategorie"
+                    class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                    autocomplete="off"
+                    data-live-search-target="searchInput"
+                    data-action="input->live-search#handleSearchInput keydown->live-search#handleKeydown focus->live-search#handleSearchFocus blur->live-search#handleSearchBlur"
+                >
+                <div
+                    class="absolute left-0 right-0 z-10 mt-1 hidden max-h-80 overflow-y-auto rounded border border-slate-200 bg-white shadow-lg"
+                    data-live-search-target="suggestions"
+                ></div>
+            </div>
+
+            <select name="category" class="rounded border border-slate-300 px-3 py-2 text-sm" data-action="change->live-search#handleFilterChange">
                 <option value="">Alle Kategorien</option>
                 {% for categoryOption in view.categoryOptions %}
                     <option value="{{ categoryOption }}" {{ view.categoryFilter == categoryOption ? 'selected' : '' }}>{{ categoryOption }}</option>
                 {% endfor %}
             </select>
-            <select name="sortBy" class="rounded border border-slate-300 px-3 py-2 text-sm">
+
+            <select name="sortBy" class="rounded border border-slate-300 px-3 py-2 text-sm" data-action="change->live-search#handleFilterChange">
                 <option value="updatedAt" {{ view.sortBy == 'updatedAt' ? 'selected' : '' }}>Letzte Änderung</option>
                 <option value="title" {{ view.sortBy == 'title' ? 'selected' : '' }}>Titel</option>
                 <option value="trackCount" {{ view.sortBy == 'trackCount' ? 'selected' : '' }}>Track-Anzahl</option>
             </select>
+
+            <select name="sortDirection" class="rounded border border-slate-300 px-3 py-2 text-sm" data-action="change->live-search#handleFilterChange">
+                <option value="DESC" {{ view.sortDirection == 'DESC' ? 'selected' : '' }}>Absteigend</option>
+                <option value="ASC" {{ view.sortDirection == 'ASC' ? 'selected' : '' }}>Aufsteigend</option>
+            </select>
+
             <div class="flex gap-2">
-                <select name="sortDirection" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
-                    <option value="DESC" {{ view.sortDirection == 'DESC' ? 'selected' : '' }}>Absteigend</option>
-                    <option value="ASC" {{ view.sortDirection == 'ASC' ? 'selected' : '' }}>Aufsteigend</option>
+                <select name="perPage" class="w-full rounded border border-slate-300 px-3 py-2 text-sm" data-action="change->live-search#handleFilterChange">
+                    {% for perPageOption in view.perPageOptions %}
+                        <option value="{{ perPageOption }}" {{ view.perPage == perPageOption ? 'selected' : '' }}>{{ perPageOption }} / Seite</option>
+                    {% endfor %}
                 </select>
                 <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Filtern</button>
             </div>
         </form>
 
-        <div class="space-y-3 md:hidden">
-            {% for item in view.items %}
-                <article class="rounded border border-slate-200 bg-white p-4 shadow-sm">
-                    <div class="mb-3 flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="text-sm font-medium text-slate-900">{{ item.title }}</p>
-                            <p class="text-xs uppercase tracking-wide text-slate-500">{{ item.categoryName }}</p>
-                        </div>
-                        <span class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{{ item.trackCount }} Tracks</span>
-                    </div>
-
-                    <div class="mt-4 flex gap-3">
-                        <a href="{{ item.showUrl }}" class="text-sm font-medium text-slate-900 underline">Details</a>
-                        <a href="{{ item.editUrl }}" class="text-sm font-medium text-slate-900 underline">Bearbeiten</a>
-                    </div>
-                </article>
-            {% else %}
-                <div class="rounded border border-slate-200 bg-white px-4 py-8 text-center text-slate-500">Noch keine Projekte vorhanden.</div>
-            {% endfor %}
-        </div>
-
-        <div class="hidden overflow-x-auto rounded border border-slate-200 bg-white md:block">
-            <table class="min-w-[42rem] w-full table-fixed divide-y divide-slate-200 text-sm lg:min-w-0">
-                <colgroup>
-                    <col class="w-[42%]">
-                    <col class="w-[20%]">
-                    <col class="w-[16%]">
-                    <col class="w-[22%]">
-                </colgroup>
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600">Titel</th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600">Kategorie</th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600">Tracks</th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    {% for item in view.items %}
-                        <tr>
-                            <td class="px-3 py-3 font-medium text-slate-900">{{ item.title }}</td>
-                            <td class="px-3 py-3 text-slate-700">{{ item.categoryName }}</td>
-                            <td class="px-3 py-3 text-slate-700">{{ item.trackCount }}</td>
-                            <td class="px-3 py-3">
-                                <div class="flex flex-col gap-1 xl:flex-row xl:gap-2">
-                                    <a href="{{ item.showUrl }}" class="text-slate-900 underline">Details</a>
-                                    <a href="{{ item.editUrl }}" class="text-slate-900 underline">Bearbeiten</a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="4" class="px-4 py-8 text-center text-slate-500">Noch keine Projekte vorhanden.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div data-live-search-target="list">
+            {% include '@projectmanagement.presentation/_list.html.twig' with { view: view } only %}
         </div>
     </div>
 {% endblock %}

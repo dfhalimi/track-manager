@@ -13,6 +13,7 @@ use App\ProjectManagement\Presentation\Service\ProjectFormPresentationServiceInt
 use App\ProjectManagement\Presentation\Service\ProjectOverviewPresentationServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -37,7 +38,38 @@ final class ProjectController extends AbstractController
                 $request->query->getString('q', ''),
                 $request->query->getString('category', ''),
                 $request->query->getString('sortBy', 'updatedAt'),
-                $request->query->getString('sortDirection', 'DESC')
+                $request->query->getString('sortDirection', 'DESC'),
+                $request->query->getInt('page', 1),
+                $request->query->getInt('perPage', 25)
+            ),
+        ]);
+    }
+
+    #[Route(path: '/projects/list', name: 'project_management.presentation.list', methods: [Request::METHOD_GET])]
+    public function listAction(Request $request): Response
+    {
+        return $this->render('@projectmanagement.presentation/_list.html.twig', [
+            'view' => $this->projectOverviewPresentationService->buildProjectListViewDto(
+                $request->query->getString('q', ''),
+                $request->query->getString('category', ''),
+                $request->query->getString('sortBy', 'updatedAt'),
+                $request->query->getString('sortDirection', 'DESC'),
+                $request->query->getInt('page', 1),
+                $request->query->getInt('perPage', 25)
+            ),
+        ]);
+    }
+
+    #[Route(path: '/projects/suggestions', name: 'project_management.presentation.suggestions', methods: [Request::METHOD_GET])]
+    public function suggestionsAction(Request $request): JsonResponse
+    {
+        return $this->json([
+            'suggestions' => $this->projectOverviewPresentationService->buildProjectSearchSuggestions(
+                $request->query->getString('q', ''),
+                $request->query->getString('category', ''),
+                $request->query->getString('sortBy', 'updatedAt'),
+                $request->query->getString('sortDirection', 'DESC'),
+                10
             ),
         ]);
     }

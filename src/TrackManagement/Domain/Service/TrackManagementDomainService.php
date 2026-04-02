@@ -111,6 +111,56 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
 
     public function getAllTracks(TrackListFilterDto $filter): TrackListResultDto
     {
+        $items       = $this->buildFilteredTrackListItems($filter);
+        $totalItems  = count($items);
+        $perPage     = $this->normalizePerPage($filter->perPage);
+        $totalPages  = max(1, (int) ceil($totalItems / $perPage));
+        $currentPage = min(max(1, $filter->page), $totalPages);
+        $offset      = ($currentPage - 1) * $perPage;
+
+        return new TrackListResultDto(
+            array_slice($items, $offset, $perPage),
+            $totalItems,
+            $currentPage,
+            $perPage,
+            $totalPages
+        );
+    }
+
+    public function getTrackSearchSuggestions(TrackListFilterDto $filter, int $limit): array
+    {
+        $searchQuery = trim((string) ($filter->searchQuery ?? ''));
+        if ($searchQuery === '') {
+            return [];
+        }
+
+        $suggestions = [];
+        foreach ($this->buildFilteredTrackListItems($filter) as $item) {
+            foreach ($this->extractTrackSuggestionCandidates($item) as $candidate) {
+                if (!$this->matchesSearchQuery($candidate, $searchQuery)) {
+                    continue;
+                }
+
+                $normalizedCandidate = mb_strtolower($candidate);
+                if (array_key_exists($normalizedCandidate, $suggestions)) {
+                    continue;
+                }
+
+                $suggestions[$normalizedCandidate] = $candidate;
+                if (count($suggestions) >= $limit) {
+                    break 2;
+                }
+            }
+        }
+
+        return array_values($suggestions);
+    }
+
+    /**
+     * @return list<TrackListItemDto>
+     */
+    private function buildFilteredTrackListItems(TrackListFilterDto $filter): array
+    {
         $items = [];
 
         foreach ($this->trackRepository->findAllByFilter($filter) as $track) {
@@ -169,7 +219,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
             );
         }
 
-        return new TrackListResultDto($items);
+        return $items;
     }
 
     private function validateTrack(Track $track): void
@@ -276,5 +326,33 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $trimmed = trim((string) $value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function normalizePerPage(int $perPage): int
+    {
+        return max(1, $perPage);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function extractTrackSuggestionCandidates(TrackListItemDto $item): array
+    {
+        $candidates = [
+            (string) $item->trackNumber,
+            $item->beatName,
+            $item->title,
+        ];
+
+        if ($item->publishingName !== null && trim($item->publishingName) !== '') {
+            $candidates[] = $item->publishingName;
+        }
+
+        return $candidates;
+    }
+
+    private function matchesSearchQuery(string $candidate, string $searchQuery): bool
+    {
+        return mb_stripos($candidate, $searchQuery) !== false;
     }
 }

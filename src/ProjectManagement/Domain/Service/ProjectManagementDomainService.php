@@ -89,6 +89,56 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     public function getAllProjects(ProjectListFilterDto $filter): ProjectListResultDto
     {
+        $items       = $this->buildFilteredProjectListItems($filter);
+        $totalItems  = count($items);
+        $perPage     = $this->normalizePerPage($filter->perPage);
+        $totalPages  = max(1, (int) ceil($totalItems / $perPage));
+        $currentPage = min(max(1, $filter->page), $totalPages);
+        $offset      = ($currentPage - 1) * $perPage;
+
+        return new ProjectListResultDto(
+            array_slice($items, $offset, $perPage),
+            $totalItems,
+            $currentPage,
+            $perPage,
+            $totalPages
+        );
+    }
+
+    public function getProjectSearchSuggestions(ProjectListFilterDto $filter, int $limit): array
+    {
+        $searchQuery = trim((string) ($filter->searchQuery ?? ''));
+        if ($searchQuery === '') {
+            return [];
+        }
+
+        $suggestions = [];
+        foreach ($this->buildFilteredProjectListItems($filter) as $item) {
+            foreach ([$item->title, $item->categoryName] as $candidate) {
+                if (mb_stripos($candidate, $searchQuery) === false) {
+                    continue;
+                }
+
+                $normalizedCandidate = mb_strtolower($candidate);
+                if (array_key_exists($normalizedCandidate, $suggestions)) {
+                    continue;
+                }
+
+                $suggestions[$normalizedCandidate] = $candidate;
+                if (count($suggestions) >= $limit) {
+                    break 2;
+                }
+            }
+        }
+
+        return array_values($suggestions);
+    }
+
+    /**
+     * @return list<ProjectListItemDto>
+     */
+    private function buildFilteredProjectListItems(ProjectListFilterDto $filter): array
+    {
         $items = [];
 
         foreach ($this->projectRepository->findAllByFilter($filter) as $project) {
@@ -110,7 +160,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             );
         }
 
-        return new ProjectListResultDto($items);
+        return $items;
     }
 
     public function getTrackAssignmentsByProjectUuid(string $projectUuid): array
@@ -299,5 +349,10 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         }
 
         $this->projectTrackAssignmentRepository->saveMany($changedAssignments);
+    }
+
+    private function normalizePerPage(int $perPage): int
+    {
+        return max(1, $perPage);
     }
 }

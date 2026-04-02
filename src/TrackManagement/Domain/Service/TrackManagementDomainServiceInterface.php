@@ -25,4 +25,9 @@ interface TrackManagementDomainServiceInterface
     public function getTrackByTrackNumber(int $trackNumber): ?Track;
 
     public function getAllTracks(TrackListFilterDto $filter): TrackListResultDto;
+
+    /**
+     * @return list<string>
+     */
+    public function getTrackSearchSuggestions(TrackListFilterDto $filter, int $limit): array;
 }

@@ -12,6 +12,19 @@ interface TrackOverviewPresentationServiceInterface
         ?string $searchQuery,
         ?string $statusFilter,
         ?string $sortBy,
-        ?string $sortDirection
+        ?string $sortDirection,
+        int     $page,
+        int     $perPage
     ): TrackListViewDto;
+
+    /**
+     * @return list<string>
+     */
+    public function buildTrackSearchSuggestions(
+        ?string $searchQuery,
+        ?string $statusFilter,
+        ?string $sortBy,
+        ?string $sortDirection,
+        int     $limit
+    ): array;
 }

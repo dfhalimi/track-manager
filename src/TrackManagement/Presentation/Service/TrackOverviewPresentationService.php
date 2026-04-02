@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Presentation\Service;
 
+use App\Common\Presentation\Dto\PaginationLinkViewDto;
 use App\FileImport\Facade\FileImportFacadeInterface;
 use App\TrackManagement\Domain\Dto\TrackListFilterDto;
 use App\TrackManagement\Domain\Enum\TrackStatus;
@@ -14,6 +15,11 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 readonly class TrackOverviewPresentationService implements TrackOverviewPresentationServiceInterface
 {
+    /**
+     * @var list<int>
+     */
+    private const array PER_PAGE_OPTIONS = [10, 25, 50, 100];
+
     public function __construct(
         private TrackManagementDomainServiceInterface $trackManagementDomainService,
         private FileImportFacadeInterface             $fileImportFacade,
@@ -25,16 +31,12 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
         ?string $searchQuery,
         ?string $statusFilter,
         ?string $sortBy,
-        ?string $sortDirection
+        ?string $sortDirection,
+        int     $page,
+        int     $perPage
     ): TrackListViewDto {
-        $result = $this->trackManagementDomainService->getAllTracks(
-            new TrackListFilterDto(
-                $searchQuery,
-                $statusFilter,
-                $sortBy        ?? 'updatedAt',
-                $sortDirection ?? 'DESC'
-            )
-        );
+        $filter = $this->buildFilterDto($searchQuery, $statusFilter, $sortBy, $sortDirection, $page, $perPage);
+        $result = $this->trackManagementDomainService->getAllTracks($filter);
 
         $items = [];
         foreach ($result->items as $item) {
@@ -59,12 +61,35 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
 
         return new TrackListViewDto(
             $items,
-            (string) ($searchQuery ?? ''),
-            (string) ($statusFilter ?? ''),
-            (string) ($sortBy ?? 'updatedAt'),
-            (string) ($sortDirection ?? 'DESC'),
+            (string) ($filter->searchQuery ?? ''),
+            (string) ($filter->statusFilter ?? ''),
+            $filter->sortBy,
+            $filter->sortDirection,
+            $result->currentPage,
+            $result->perPage,
+            self::PER_PAGE_OPTIONS,
+            $result->totalItems,
+            $result->totalPages,
+            $result->currentPage > 1 ? $this->buildIndexUrl($filter, $result->currentPage - 1) : null,
+            $result->currentPage < $result->totalPages ? $this->buildIndexUrl($filter, $result->currentPage + 1) : null,
+            $this->buildPageLinks($filter, $result->currentPage, $result->totalPages),
+            $this->urlGenerator->generate('track_management.presentation.index'),
+            $this->urlGenerator->generate('track_management.presentation.list'),
+            $this->urlGenerator->generate('track_management.presentation.suggestions'),
             $this->urlGenerator->generate('track_management.presentation.create')
         );
+    }
+
+    public function buildTrackSearchSuggestions(
+        ?string $searchQuery,
+        ?string $statusFilter,
+        ?string $sortBy,
+        ?string $sortDirection,
+        int     $limit
+    ): array {
+        $filter = $this->buildFilterDto($searchQuery, $statusFilter, $sortBy, $sortDirection, 1, max(self::PER_PAGE_OPTIONS));
+
+        return $this->trackManagementDomainService->getTrackSearchSuggestions($filter, $limit);
     }
 
     /**
@@ -81,6 +106,61 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
     private function formatMusicalKeys(array $musicalKeys): string
     {
         return implode(', ', $musicalKeys);
+    }
+
+    private function buildFilterDto(
+        ?string $searchQuery,
+        ?string $statusFilter,
+        ?string $sortBy,
+        ?string $sortDirection,
+        int     $page,
+        int     $perPage
+    ): TrackListFilterDto {
+        return new TrackListFilterDto(
+            $searchQuery,
+            $statusFilter,
+            (string) ($sortBy ?? 'updatedAt'),
+            (string) ($sortDirection ?? 'DESC'),
+            max(1, $page),
+            $this->normalizePerPage($perPage)
+        );
+    }
+
+    /**
+     * @return list<PaginationLinkViewDto>
+     */
+    private function buildPageLinks(TrackListFilterDto $filter, int $currentPage, int $totalPages): array
+    {
+        $pageLinks = [];
+        $startPage = max(1, $currentPage - 2);
+        $endPage   = min($totalPages, $currentPage + 2);
+
+        for ($page = $startPage; $page <= $endPage; ++$page) {
+            $pageLinks[] = new PaginationLinkViewDto(
+                $page,
+                $this->buildIndexUrl($filter, $page),
+                $page === $currentPage
+            );
+        }
+
+        return $pageLinks;
+    }
+
+    private function buildIndexUrl(TrackListFilterDto $filter, int $page): string
+    {
+        return $this->urlGenerator->generate('track_management.presentation.index', [
+            'q'             => $filter->searchQuery,
+            'status'        => $filter->statusFilter,
+            'sortBy'        => $filter->sortBy,
+            'sortDirection' => $filter->sortDirection,
+            'page'          => $page,
+            'perPage'       => $filter->perPage,
+        ]);
+    }
+
+    private function normalizePerPage(int $perPage): int
+    {
+        return in_array($perPage, self::PER_PAGE_OPTIONS, true) ? $perPage : 25;
     }
 
     private function formatBpm(float $bpm): string
