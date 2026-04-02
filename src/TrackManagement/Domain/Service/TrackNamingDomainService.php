@@ -6,6 +6,7 @@ namespace App\TrackManagement\Domain\Service;
 
 use App\TrackManagement\Domain\Dto\TrackNamingInputDto;
 use App\TrackManagement\Domain\Support\MusicalKeyCatalog;
+
 use function abs;
 use function array_filter;
 use function array_map;

@@ -190,7 +190,9 @@ export default class extends Controller<HTMLFormElement> {
                 return [];
             }
 
-            return parsed.filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0);
+            return parsed.filter(
+                (value): value is number => typeof value === "number" && Number.isFinite(value) && value > 0,
+            );
         } catch {
             return [];
         }
