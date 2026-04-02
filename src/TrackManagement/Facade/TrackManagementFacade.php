@@ -104,7 +104,7 @@ readonly class TrackManagementFacade implements TrackManagementFacadeInterface
     public function getAllTracksForSelection(): array
     {
         $tracks = $this->trackManagementDomainService->getAllTracks(
-            new TrackListFilterDto('', '', 'trackNumber', 'ASC', 1, 10000)
+            new TrackListFilterDto('', '', 'active', 'trackNumber', 'ASC', 1, 10000)
         );
 
         return array_map(
@@ -131,6 +131,7 @@ readonly class TrackManagementFacade implements TrackManagementFacadeInterface
             $track->getMusicalKeys(),
             $track->getNotes(),
             $track->getIsrc(),
+            $track->isCancelled(),
             $track->getCreatedAt(),
             $track->getUpdatedAt()
         );

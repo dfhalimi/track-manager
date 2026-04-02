@@ -13,11 +13,18 @@
                 <p class="text-sm text-slate-600">{{ view.beatName }} · {{ view.bpmLabel }} BPM · {{ view.musicalKeyLabel }}</p>
             </div>
             <div class="flex gap-3">
-                <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
-                <form method="post" action="{{ view.deleteUrl }}">
-                    <input type="hidden" name="_token" value="{{ csrf_token('delete_track_' ~ view.uuid) }}">
-                    <button type="submit" class="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white">Löschen</button>
-                </form>
+                {% if not view.cancelled %}
+                    <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
+                    <form method="post" action="{{ view.cancelUrl }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('cancel_track_' ~ view.uuid) }}">
+                        <button type="submit" class="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white">Archivieren</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{{ view.reactivateUrl }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reactivate_track_' ~ view.uuid) }}">
+                        <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Reaktivieren</button>
+                    </form>
+                {% endif %}
             </div>
         </div>
 
@@ -28,6 +35,12 @@
                 </div>
             {% endfor %}
         {% endfor %}
+
+        {% if view.cancelled %}
+            <div class="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Dieser Track wurde archiviert. Er bleibt zur Nachvollziehbarkeit sichtbar, kann aber aktuell nicht bearbeitet werden.
+            </div>
+        {% endif %}
 
         <div class="grid gap-6 lg:grid-cols-3">
             <div class="rounded border border-slate-200 bg-white p-5 lg:col-span-2">
@@ -68,24 +81,28 @@
                         <p><span class="font-medium">Typ:</span> {{ view.trackFile.mimeType }}</p>
                         <p><span class="font-medium">Hochgeladen:</span> {{ view.trackFile.uploadedAt }}</p>
                         {% include '@trackmanagement.presentation/_audio_player.html.twig' with { playbackUrl: view.trackFile.playbackUrl } only %}
-                        <form
-                            action="{{ view.trackFile.replaceUrl }}"
-                            method="post"
-                            enctype="multipart/form-data"
-                            class="space-y-2"
-                            data-controller="file-upload"
-                        >
-                            <input
-                                type="file"
-                                name="track_file"
-                                accept=".mp3,.wav,audio/mpeg,audio/wav"
-                                class="hidden"
-                                data-file-upload-target="input"
-                                data-action="change->file-upload#submitOnChange"
+                        {% if not view.cancelled %}
+                            <form
+                                action="{{ view.trackFile.replaceUrl }}"
+                                method="post"
+                                enctype="multipart/form-data"
+                                class="space-y-2"
+                                data-controller="file-upload"
                             >
-                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei ersetzen</button>
-                            <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
-                        </form>
+                                <input
+                                    type="file"
+                                    name="track_file"
+                                    accept=".mp3,.wav,audio/mpeg,audio/wav"
+                                    class="hidden"
+                                    data-file-upload-target="input"
+                                    data-action="change->file-upload#submitOnChange"
+                                >
+                                <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei ersetzen</button>
+                                <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
+                            </form>
+                        {% else %}
+                            <p class="text-xs text-slate-500">Bestehende Dateien bleiben verfuegbar, koennen aber bei archivierten Tracks nicht ersetzt werden.</p>
+                        {% endif %}
                         <div class="flex gap-2">
                             <a href="{{ view.trackFile.exportMp3Url }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export MP3</a>
                             <a href="{{ view.trackFile.exportWavUrl }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export WAV</a>
@@ -95,25 +112,29 @@
                         {% endif %}
                     </div>
                 {% else %}
-                    <form
-                        action="{{ path('file_import.presentation.upload', { trackUuid: view.uuid }) }}"
-                        method="post"
-                        enctype="multipart/form-data"
-                        class="space-y-3"
-                        data-controller="file-upload"
-                    >
-                        <p class="text-sm text-slate-600">Noch keine Audiodatei vorhanden.</p>
-                        <input
-                            type="file"
-                            name="track_file"
-                            accept=".mp3,.wav,audio/mpeg,audio/wav"
-                            class="hidden"
-                            data-file-upload-target="input"
-                            data-action="change->file-upload#submitOnChange"
+                    {% if not view.cancelled %}
+                        <form
+                            action="{{ path('file_import.presentation.upload', { trackUuid: view.uuid }) }}"
+                            method="post"
+                            enctype="multipart/form-data"
+                            class="space-y-3"
+                            data-controller="file-upload"
                         >
-                        <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei hochladen</button>
-                        <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
-                    </form>
+                            <p class="text-sm text-slate-600">Noch keine Audiodatei vorhanden.</p>
+                            <input
+                                type="file"
+                                name="track_file"
+                                accept=".mp3,.wav,audio/mpeg,audio/wav"
+                                class="hidden"
+                                data-file-upload-target="input"
+                                data-action="change->file-upload#submitOnChange"
+                            >
+                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Datei hochladen</button>
+                            <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
+                        </form>
+                    {% else %}
+                        <p class="text-sm text-slate-600">Dieser archivierte Track hat keine Audiodatei.</p>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -147,69 +168,81 @@
                 <span class="text-sm text-slate-600">{{ view.progress }}% erledigt</span>
             </div>
 
-            <p class="mb-4 text-sm text-slate-600">Items können per Drag-and-Drop neu angeordnet werden.</p>
+            <p class="mb-4 text-sm text-slate-600">
+                {{ view.cancelled ? 'Checklisten-Einträge sind für archivierte Tracks nur noch lesbar.' : 'Items können per Drag-and-Drop neu angeordnet werden.' }}
+            </p>
 
             <div
                 class="space-y-3"
-                data-controller="checklist-reorder"
-                data-action="dragover->checklist-reorder#dragOver drop->checklist-reorder#drop"
+                {% if not view.cancelled %}data-controller="checklist-reorder"{% endif %}
+                {% if not view.cancelled %}data-action="dragover->checklist-reorder#dragOver drop->checklist-reorder#drop"{% endif %}
             >
                 {% for item in view.checklistItems %}
                     <div
                         class="group rounded border border-slate-200 p-3 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
-                        draggable="true"
-                        data-checklist-reorder-target="item"
-                        data-item-uuid="{{ item.uuid }}"
-                        data-action="dragstart->checklist-reorder#startDrag dragend->checklist-reorder#endDrag"
+                        {% if not view.cancelled %}draggable="true"{% endif %}
+                        {% if not view.cancelled %}data-checklist-reorder-target="item"{% endif %}
+                        {% if not view.cancelled %}data-item-uuid="{{ item.uuid }}"{% endif %}
+                        {% if not view.cancelled %}data-action="dragstart->checklist-reorder#startDrag dragend->checklist-reorder#endDrag"{% endif %}
                     >
                         <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <form action="{{ item.toggleUrl }}" method="post" class="flex items-center gap-3">
-                                <input type="hidden" name="is_completed" value="{{ item.isCompleted ? '0' : '1' }}">
-                                <span
-                                    class="inline-flex h-7 w-7 shrink-0 items-center justify-center self-center text-slate-500 cursor-pointer select-none leading-none transition group-hover:text-slate-600"
-                                    title="Ziehen zum Sortieren"
-                                    data-drag-handle
-                                >
-                                    <svg class="block h-4 w-4" viewBox="0 0 8 12" fill="currentColor" aria-hidden="true">
-                                        <circle cx="2" cy="2" r="1"></circle>
-                                        <circle cx="6" cy="2" r="1"></circle>
-                                        <circle cx="2" cy="6" r="1"></circle>
-                                        <circle cx="6" cy="6" r="1"></circle>
-                                        <circle cx="2" cy="10" r="1"></circle>
-                                        <circle cx="6" cy="10" r="1"></circle>
-                                    </svg>
-                                    <span class="sr-only">Ziehen</span>
-                                </span>
-                                <button type="submit" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">
-                                    {{ item.isCompleted ? 'Als offen markieren' : 'Als erledigt markieren' }}
-                                </button>
-                                <span class="text-sm {{ item.isCompleted ? 'text-emerald-700 line-through' : 'text-slate-900' }}">{{ item.label }}</span>
-                            </form>
+                            {% if not view.cancelled %}
+                                <form action="{{ item.toggleUrl }}" method="post" class="flex items-center gap-3">
+                                    <input type="hidden" name="is_completed" value="{{ item.isCompleted ? '0' : '1' }}">
+                                    <span
+                                        class="inline-flex h-7 w-7 shrink-0 items-center justify-center self-center text-slate-500 cursor-pointer select-none leading-none transition group-hover:text-slate-600"
+                                        title="Ziehen zum Sortieren"
+                                        data-drag-handle
+                                    >
+                                        <svg class="block h-4 w-4" viewBox="0 0 8 12" fill="currentColor" aria-hidden="true">
+                                            <circle cx="2" cy="2" r="1"></circle>
+                                            <circle cx="6" cy="2" r="1"></circle>
+                                            <circle cx="2" cy="6" r="1"></circle>
+                                            <circle cx="6" cy="6" r="1"></circle>
+                                            <circle cx="2" cy="10" r="1"></circle>
+                                            <circle cx="6" cy="10" r="1"></circle>
+                                        </svg>
+                                        <span class="sr-only">Ziehen</span>
+                                    </span>
+                                    <button type="submit" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">
+                                        {{ item.isCompleted ? 'Als offen markieren' : 'Als erledigt markieren' }}
+                                    </button>
+                                    <span class="text-sm {{ item.isCompleted ? 'text-emerald-700 line-through' : 'text-slate-900' }}">{{ item.label }}</span>
+                                </form>
 
-                            <div class="flex flex-col gap-2 md:flex-row">
-                                <form action="{{ item.renameUrl }}" method="post" class="flex gap-2">
-                                    <input type="text" name="label" value="{{ item.label }}" class="rounded border border-slate-300 px-3 py-2 text-sm cursor-text">
-                                    <button type="submit" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Umbenennen</button>
-                                </form>
-                                <form action="{{ item.removeUrl }}" method="post">
-                                    <button type="submit" class="rounded border border-red-300 px-3 py-2 text-sm font-medium text-red-700">Entfernen</button>
-                                </form>
-                            </div>
+                                <div class="flex flex-col gap-2 md:flex-row">
+                                    <form action="{{ item.renameUrl }}" method="post" class="flex gap-2">
+                                        <input type="text" name="label" value="{{ item.label }}" class="rounded border border-slate-300 px-3 py-2 text-sm cursor-text">
+                                        <button type="submit" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Umbenennen</button>
+                                    </form>
+                                    <form action="{{ item.removeUrl }}" method="post">
+                                        <button type="submit" class="rounded border border-red-300 px-3 py-2 text-sm font-medium text-red-700">Entfernen</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <div class="flex items-center gap-3">
+                                    <span class="text-sm {{ item.isCompleted ? 'text-emerald-700 line-through' : 'text-slate-900' }}">{{ item.label }}</span>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
 
-                <form action="{{ view.checklistReorderUrl }}" method="post" class="hidden" data-checklist-reorder-target="form">
-                    <input type="hidden" name="ordered_item_uuids" value="" data-checklist-reorder-target="input">
-                </form>
+                {% if not view.cancelled %}
+                    <form action="{{ view.checklistReorderUrl }}" method="post" class="hidden" data-checklist-reorder-target="form">
+                        <input type="hidden" name="ordered_item_uuids" value="" data-checklist-reorder-target="input">
+                    </form>
 
-                <p class="hidden" aria-live="polite" data-checklist-reorder-target="status"></p>
+                    <p class="hidden" aria-live="polite" data-checklist-reorder-target="status"></p>
+                {% endif %}
             </div>
 
-            <form action="{{ view.checklistAddUrl }}" method="post" class="mt-4 flex gap-2">
-                <input type="text" name="label" placeholder="Neuen Checklisten-Eintrag anlegen" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
-                <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Hinzufügen</button>
-            </form>
+            {% if not view.cancelled %}
+                <form action="{{ view.checklistAddUrl }}" method="post" class="mt-4 flex gap-2">
+                    <input type="text" name="label" placeholder="Neuen Checklisten-Eintrag anlegen" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                    <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Hinzufügen</button>
+                </form>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

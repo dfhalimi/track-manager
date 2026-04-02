@@ -11,6 +11,7 @@ interface ProjectOverviewPresentationServiceInterface
     public function buildProjectListViewDto(
         ?string $searchQuery,
         ?string $categoryFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $page,
@@ -23,6 +24,7 @@ interface ProjectOverviewPresentationServiceInterface
     public function buildProjectSearchSuggestions(
         ?string $searchQuery,
         ?string $categoryFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $limit

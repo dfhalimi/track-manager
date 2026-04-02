@@ -22,6 +22,7 @@ readonly class TrackDto
         public array             $musicalKeys,
         public ?string           $notes,
         public ?string           $isrc,
+        public bool              $cancelled,
         public DateTimeImmutable $createdAt,
         public DateTimeImmutable $updatedAt
     ) {

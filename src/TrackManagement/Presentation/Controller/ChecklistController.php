@@ -10,6 +10,7 @@ use App\TrackManagement\Domain\Dto\RenameChecklistItemInputDto;
 use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\ToggleChecklistItemInputDto;
 use App\TrackManagement\Domain\Service\ChecklistDomainServiceInterface;
+use App\TrackManagement\Domain\Service\TrackManagementDomainServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +22,8 @@ use ValueError;
 final class ChecklistController extends AbstractController
 {
     public function __construct(
-        private readonly ChecklistDomainServiceInterface $checklistDomainService
+        private readonly ChecklistDomainServiceInterface       $checklistDomainService,
+        private readonly TrackManagementDomainServiceInterface $trackManagementDomainService
     ) {
     }
 
@@ -29,6 +31,7 @@ final class ChecklistController extends AbstractController
     public function addAction(Request $request, string $trackUuid): Response
     {
         try {
+            $this->assertTrackIsActive($trackUuid);
             $this->checklistDomainService->addChecklistItem(
                 new AddChecklistItemInputDto($trackUuid, $request->request->getString('label'))
             );
@@ -44,6 +47,7 @@ final class ChecklistController extends AbstractController
     public function renameAction(Request $request, string $trackUuid, string $itemUuid): Response
     {
         try {
+            $this->assertTrackIsActive($trackUuid);
             $this->checklistDomainService->renameChecklistItem(
                 new RenameChecklistItemInputDto($trackUuid, $itemUuid, $request->request->getString('label'))
             );
@@ -59,6 +63,7 @@ final class ChecklistController extends AbstractController
     public function toggleAction(Request $request, string $trackUuid, string $itemUuid): Response
     {
         try {
+            $this->assertTrackIsActive($trackUuid);
             $this->checklistDomainService->toggleChecklistItem(
                 new ToggleChecklistItemInputDto(
                     $trackUuid,
@@ -77,6 +82,7 @@ final class ChecklistController extends AbstractController
     public function removeAction(string $trackUuid, string $itemUuid): Response
     {
         try {
+            $this->assertTrackIsActive($trackUuid);
             $this->checklistDomainService->removeChecklistItem(
                 new RemoveChecklistItemInputDto($trackUuid, $itemUuid)
             );
@@ -92,6 +98,7 @@ final class ChecklistController extends AbstractController
     public function reorderAction(Request $request, string $trackUuid): Response
     {
         try {
+            $this->assertTrackIsActive($trackUuid);
             $orderedItemUuids = json_decode($request->request->getString('ordered_item_uuids'), true);
 
             if (!is_array($orderedItemUuids)) {
@@ -129,5 +136,12 @@ final class ChecklistController extends AbstractController
         }
 
         return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+    }
+
+    private function assertTrackIsActive(string $trackUuid): void
+    {
+        if ($this->trackManagementDomainService->getTrackByUuid($trackUuid)->isCancelled()) {
+            throw new ValueError('Archivierte Tracks koennen nicht bearbeitet werden.');
+        }
     }
 }

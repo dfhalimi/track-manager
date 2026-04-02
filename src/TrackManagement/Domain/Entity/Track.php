@@ -48,6 +48,9 @@ class Track
     #[ORM\Column(type: Types::STRING, length: 32, nullable: true)]
     private ?string $isrc = null;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $cancelled = false;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
 
@@ -154,6 +157,16 @@ class Track
     public function setIsrc(?string $isrc): void
     {
         $this->isrc = $isrc;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->cancelled;
+    }
+
+    public function setCancelled(bool $cancelled): void
+    {
+        $this->cancelled = $cancelled;
     }
 
     public function getCreatedAt(): DateTimeImmutable

@@ -148,6 +148,10 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
         if (!$this->trackManagementFacade->trackExists($trackUuid)) {
             throw new ValueError('Target track does not exist.');
         }
+
+        if ($this->trackManagementFacade->getTrackByUuid($trackUuid)->cancelled) {
+            throw new ValueError('Archivierte Tracks koennen keine neuen Dateien erhalten.');
+        }
     }
 
     private function assertAudioFileSize(UploadedFile $file): void

@@ -64,6 +64,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
     public function updateTrack(UpdateTrackInputDto $input): Track
     {
         $track = $this->trackRepository->getByUuid($input->trackUuid);
+        $this->assertTrackIsActive($track);
 
         $track->setBeatName(trim($input->beatName));
         $track->setBpms($this->normalizeBpms($input->bpms));
@@ -97,6 +98,35 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $track = $this->trackRepository->getByUuid($trackUuid);
         $this->checklistDomainService->deleteChecklistByTrackUuid($trackUuid);
         $this->trackRepository->remove($track);
+    }
+
+    public function cancelTrack(string $trackUuid): Track
+    {
+        $track = $this->trackRepository->getByUuid($trackUuid);
+        if ($track->isCancelled()) {
+            return $track;
+        }
+
+        $track->setCancelled(true);
+        $track->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+        $this->trackRepository->save($track);
+
+        return $track;
+    }
+
+    public function reactivateTrack(string $trackUuid): Track
+    {
+        $track = $this->trackRepository->getByUuid($trackUuid);
+        if (!$track->isCancelled()) {
+            return $track;
+        }
+
+        $track->setCancelled(false);
+        $track->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+        $this->trackRepository->save($track);
+        $this->validateTrack($track);
+
+        return $track;
     }
 
     public function getTrackByUuid(string $trackUuid): Track
@@ -187,6 +217,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
                 $track->getMusicalKeys(),
                 $this->progressCalculator->calculateProgress($checklistItems),
                 $status->value,
+                $track->isCancelled(),
                 false,
                 $track->getUpdatedAt()
             );
@@ -326,6 +357,13 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $trimmed = trim((string) $value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function assertTrackIsActive(Track $track): void
+    {
+        if ($track->isCancelled()) {
+            throw new ValueError('Archivierte Tracks koennen nicht bearbeitet werden.');
+        }
     }
 
     private function normalizePerPage(int $perPage): int

@@ -17,6 +17,7 @@ readonly class TrackListViewDto
         public array   $items,
         public string  $searchQuery,
         public string  $statusFilter,
+        public string  $cancelledFilter,
         public string  $sortBy,
         public string  $sortDirection,
         public int     $currentPage,

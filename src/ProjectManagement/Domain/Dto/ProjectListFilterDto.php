@@ -9,6 +9,7 @@ readonly class ProjectListFilterDto
     public function __construct(
         public ?string $searchQuery,
         public ?string $categoryFilter,
+        public ?string $cancelledFilter,
         public ?string $sortBy,
         public ?string $sortDirection,
         public int     $page,

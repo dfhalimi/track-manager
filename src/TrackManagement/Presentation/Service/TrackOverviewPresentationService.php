@@ -31,12 +31,13 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
     public function buildTrackListViewDto(
         ?string $searchQuery,
         ?string $statusFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $page,
         int     $perPage
     ): TrackListViewDto {
-        $filter = $this->buildFilterDto($searchQuery, $statusFilter, $sortBy, $sortDirection, $page, $perPage);
+        $filter = $this->buildFilterDto($searchQuery, $statusFilter, $cancelledFilter, $sortBy, $sortDirection, $page, $perPage);
         $result = $this->trackManagementDomainService->getAllTracks($filter);
 
         $items = [];
@@ -53,6 +54,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
                 $this->formatMusicalKeys($item->musicalKeys),
                 $status->getLabel(),
                 $status->value,
+                $item->cancelled,
                 $item->progress,
                 $trackFile !== null,
                 $this->urlGenerator->generate('file_import.presentation.upload', ['trackUuid' => $item->uuid]),
@@ -68,7 +70,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
                 ),
                 $this->urlGenerator->generate('track_management.presentation.show', ['trackUuid' => $item->uuid]),
                 $this->urlGenerator->generate('track_management.presentation.edit', ['trackUuid' => $item->uuid]),
-                $this->urlGenerator->generate('track_management.presentation.delete', ['trackUuid' => $item->uuid])
+                $this->urlGenerator->generate('track_management.presentation.cancel', ['trackUuid' => $item->uuid])
             );
         }
 
@@ -76,6 +78,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
             $items,
             (string) ($filter->searchQuery ?? ''),
             (string) ($filter->statusFilter ?? ''),
+            (string) ($filter->cancelledFilter ?? ''),
             $filter->sortBy,
             $filter->sortDirection,
             $result->currentPage,
@@ -97,11 +100,12 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
     public function buildTrackSearchSuggestions(
         ?string $searchQuery,
         ?string $statusFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $limit
     ): array {
-        $filter = $this->buildFilterDto($searchQuery, $statusFilter, $sortBy, $sortDirection, 1, max(self::PER_PAGE_OPTIONS));
+        $filter = $this->buildFilterDto($searchQuery, $statusFilter, $cancelledFilter, $sortBy, $sortDirection, 1, max(self::PER_PAGE_OPTIONS));
 
         return $this->trackManagementDomainService->getTrackSearchSuggestions($filter, $limit);
     }
@@ -125,6 +129,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
     private function buildFilterDto(
         ?string $searchQuery,
         ?string $statusFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $page,
@@ -133,6 +138,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
         return new TrackListFilterDto(
             $searchQuery,
             $statusFilter,
+            $cancelledFilter,
             (string) ($sortBy ?? 'updatedAt'),
             (string) ($sortDirection ?? 'DESC'),
             max(1, $page),
@@ -165,6 +171,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
         return $this->urlGenerator->generate('track_management.presentation.index', [
             'q'             => $filter->searchQuery,
             'status'        => $filter->statusFilter,
+            'cancelled'     => $filter->cancelledFilter,
             'sortBy'        => $filter->sortBy,
             'sortDirection' => $filter->sortDirection,
             'page'          => $page,

@@ -30,6 +30,7 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
             $project->getTitle(),
             $project->getCategoryUuid(),
             $category->getName(),
+            $project->isCancelled(),
             $project->getCreatedAt(),
             $project->getUpdatedAt()
         );
@@ -73,7 +74,11 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
         $memberships = [];
 
         foreach ($this->projectManagementDomainService->getTrackAssignmentsByTrackUuid($trackUuid) as $assignment) {
-            $project  = $this->projectManagementDomainService->getProjectByUuid($assignment->getProjectUuid());
+            $project = $this->projectManagementDomainService->getProjectByUuid($assignment->getProjectUuid());
+            if ($project->isCancelled()) {
+                continue;
+            }
+
             $category = $this->projectManagementDomainService->getProjectCategoryByUuid($project->getCategoryUuid());
 
             $memberships[] = new TrackProjectMembershipDto(
@@ -90,5 +95,10 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
     public function removeTrackFromAllProjects(string $trackUuid): void
     {
         $this->projectManagementDomainService->removeTrackFromAllProjects($trackUuid);
+    }
+
+    public function removeTrackFromActiveProjects(string $trackUuid): void
+    {
+        $this->projectManagementDomainService->removeTrackFromActiveProjects($trackUuid);
     }
 }

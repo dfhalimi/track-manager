@@ -73,6 +73,15 @@ class TrackRepository extends ServiceEntityRepository implements TrackRepository
             }
         }
 
+        $cancelledFilter = trim((string) ($filter->cancelledFilter ?? ''));
+        if ($cancelledFilter === 'active') {
+            $queryBuilder->andWhere('track.cancelled = false');
+        }
+
+        if ($cancelledFilter === 'cancelled') {
+            $queryBuilder->andWhere('track.cancelled = true');
+        }
+
         $sortBy = match ($filter->sortBy) {
             'trackNumber' => 'track.trackNumber',
             'createdAt'   => 'track.createdAt',

@@ -111,6 +111,10 @@ readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomain
         if (!$this->projectManagementFacade->projectExists($projectUuid)) {
             throw new ValueError('Target project does not exist.');
         }
+
+        if ($this->projectManagementFacade->getProjectByUuid($projectUuid)->cancelled) {
+            throw new ValueError('Archivierte Projekte koennen keine neuen Bilder erhalten.');
+        }
     }
 
     private function assertSupportedImageFile(UploadedFile $file): void

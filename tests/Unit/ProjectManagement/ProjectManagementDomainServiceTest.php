@@ -404,7 +404,20 @@ final readonly class TrackManagementFacadeStub implements TrackManagementFacadeI
 
     public function getTrackByUuid(string $trackUuid): TrackDto
     {
-        throw new BadMethodCallException();
+        return new TrackDto(
+            $trackUuid,
+            1,
+            'Beat',
+            'Title',
+            null,
+            [120.0],
+            ['C Maj'],
+            null,
+            null,
+            false,
+            DateAndTimeService::getDateTimeImmutable(),
+            DateAndTimeService::getDateTimeImmutable()
+        );
     }
 
     public function getTrackByTrackNumber(int $trackNumber): ?TrackDto

@@ -14,6 +14,7 @@ readonly class TrackDetailViewDto
         public string            $uuid,
         public int               $trackNumber,
         public string            $createdAt,
+        public bool              $cancelled,
         public string            $beatName,
         public string            $title,
         public ?string           $publishingName,
@@ -29,7 +30,8 @@ readonly class TrackDetailViewDto
         public ?TrackFileViewDto $trackFile,
         public string            $backToListUrl,
         public string            $editUrl,
-        public string            $deleteUrl,
+        public string            $cancelUrl,
+        public string            $reactivateUrl,
         public string            $checklistAddUrl,
         public string            $checklistReorderUrl
     ) {

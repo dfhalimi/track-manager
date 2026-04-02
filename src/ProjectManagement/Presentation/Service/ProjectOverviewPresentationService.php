@@ -29,12 +29,13 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
     public function buildProjectListViewDto(
         ?string $searchQuery,
         ?string $categoryFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $page,
         int     $perPage
     ): ProjectListViewDto {
-        $filter = $this->buildFilterDto($searchQuery, $categoryFilter, $sortBy, $sortDirection, $page, $perPage);
+        $filter = $this->buildFilterDto($searchQuery, $categoryFilter, $cancelledFilter, $sortBy, $sortDirection, $page, $perPage);
         $result = $this->projectManagementDomainService->getAllProjects($filter);
 
         $items = array_map(
@@ -43,6 +44,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
                 $item->title,
                 $item->categoryName,
                 $item->artists,
+                $item->cancelled,
                 $item->trackCount,
                 $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $item->uuid]),
                 $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $item->uuid])
@@ -59,6 +61,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
             $items,
             (string) ($filter->searchQuery ?? ''),
             (string) ($filter->categoryFilter ?? ''),
+            (string) ($filter->cancelledFilter ?? ''),
             $categoryOptions,
             (string) ($filter->sortBy ?? 'updatedAt'),
             (string) ($filter->sortDirection ?? 'DESC'),
@@ -81,11 +84,12 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
     public function buildProjectSearchSuggestions(
         ?string $searchQuery,
         ?string $categoryFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $limit
     ): array {
-        $filter = $this->buildFilterDto($searchQuery, $categoryFilter, $sortBy, $sortDirection, 1, max(self::PER_PAGE_OPTIONS));
+        $filter = $this->buildFilterDto($searchQuery, $categoryFilter, $cancelledFilter, $sortBy, $sortDirection, 1, max(self::PER_PAGE_OPTIONS));
 
         return $this->projectManagementDomainService->getProjectSearchSuggestions($filter, $limit);
     }
@@ -93,6 +97,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
     private function buildFilterDto(
         ?string $searchQuery,
         ?string $categoryFilter,
+        ?string $cancelledFilter,
         ?string $sortBy,
         ?string $sortDirection,
         int     $page,
@@ -101,6 +106,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
         return new ProjectListFilterDto(
             $searchQuery,
             $categoryFilter,
+            $cancelledFilter,
             $sortBy        ?? 'updatedAt',
             $sortDirection ?? 'DESC',
             max(1, $page),
@@ -133,6 +139,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
         return $this->urlGenerator->generate('project_management.presentation.index', [
             'q'             => $filter->searchQuery,
             'category'      => $filter->categoryFilter,
+            'cancelled'     => $filter->cancelledFilter,
             'sortBy'        => $filter->sortBy,
             'sortDirection' => $filter->sortDirection,
             'page'          => $page,

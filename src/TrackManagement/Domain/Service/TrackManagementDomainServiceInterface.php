@@ -20,6 +20,10 @@ interface TrackManagementDomainServiceInterface
 
     public function deleteTrack(string $trackUuid): void;
 
+    public function cancelTrack(string $trackUuid): Track;
+
+    public function reactivateTrack(string $trackUuid): Track;
+
     public function getTrackByUuid(string $trackUuid): Track;
 
     public function getTrackByTrackNumber(int $trackNumber): ?Track;

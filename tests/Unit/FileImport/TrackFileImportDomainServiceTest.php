@@ -14,6 +14,7 @@ use App\TrackManagement\Facade\Dto\TrackExportDataDto;
 use App\TrackManagement\Facade\Dto\TrackNamingDto;
 use App\TrackManagement\Facade\Dto\TrackSelectionDto;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
+use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 describe('TrackFileImportDomainService', function (): void {
@@ -183,7 +184,20 @@ final readonly class ExistingTrackManagementFacadeStub implements TrackManagemen
 
     public function getTrackByUuid(string $trackUuid): TrackDto
     {
-        throw new BadMethodCallException();
+        return new TrackDto(
+            $trackUuid,
+            1,
+            'Beat',
+            'Title',
+            null,
+            [120.0],
+            ['C Maj'],
+            null,
+            null,
+            false,
+            DateAndTimeService::getDateTimeImmutable(),
+            DateAndTimeService::getDateTimeImmutable()
+        );
     }
 
     public function getTrackByTrackNumber(int $trackNumber): ?TrackDto

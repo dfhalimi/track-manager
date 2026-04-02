@@ -68,6 +68,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
             $track->uuid,
             $track->trackNumber,
             $track->createdAt->format('d.m.Y H:i'),
+            $track->cancelled,
             $track->beatName,
             $track->title,
             $track->publishingName,
@@ -92,7 +93,8 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
             ),
             $this->urlGenerator->generate('track_management.presentation.index'),
             $this->urlGenerator->generate('track_management.presentation.edit', ['trackUuid' => $trackUuid]),
-            $this->urlGenerator->generate('track_management.presentation.delete', ['trackUuid' => $trackUuid]),
+            $this->urlGenerator->generate('track_management.presentation.cancel', ['trackUuid' => $trackUuid]),
+            $this->urlGenerator->generate('track_management.presentation.reactivate', ['trackUuid' => $trackUuid]),
             $this->urlGenerator->generate('track_management.presentation.checklist.add', ['trackUuid' => $trackUuid]),
             $this->urlGenerator->generate('track_management.presentation.checklist.reorder', ['trackUuid' => $trackUuid])
         );
