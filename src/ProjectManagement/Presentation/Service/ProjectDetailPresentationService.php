@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Service;
 
+use App\FileImport\Facade\FileImportFacadeInterface;
 use App\MediaAssetManagement\Facade\MediaAssetManagementFacadeInterface;
+use App\ProjectManagement\Facade\Dto\ProjectTrackAssignmentDto;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\ProjectManagement\Presentation\Dto\ProjectDetailViewDto;
 use App\ProjectManagement\Presentation\Dto\ProjectMediaAssetViewDto;
@@ -18,6 +20,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
     public function __construct(
         private ProjectManagementFacadeInterface    $projectManagementFacade,
         private TrackManagementFacadeInterface      $trackManagementFacade,
+        private FileImportFacadeInterface           $fileImportFacade,
         private MediaAssetManagementFacadeInterface $mediaAssetManagementFacade,
         private UrlGeneratorInterface               $urlGenerator
     ) {
@@ -35,15 +38,18 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $tracksByUuid[$track->uuid] = $track;
         }
 
-        $assignedTrackUuids = [];
-        $trackItems         = [];
+        $assignedTrackUuids  = [];
+        $trackItems          = [];
+        $hasExportableTracks = false;
         foreach ($assignments as $assignment) {
             $track = $tracksByUuid[$assignment->trackUuid] ?? null;
             if ($track === null) {
                 continue;
             }
 
+            $hasAudioFile         = $this->fileImportFacade->getCurrentTrackFileByTrackUuid($assignment->trackUuid) !== null;
             $assignedTrackUuids[] = $assignment->trackUuid;
+            $hasExportableTracks  = $hasExportableTracks || $hasAudioFile;
             $trackItems[]         = new ProjectTrackAssignmentViewDto(
                 $assignment->trackUuid,
                 $this->buildTrackLabel($track->trackNumber, $track->beatName, $track->publishingName, $track->title),
@@ -52,7 +58,10 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
                 $this->urlGenerator->generate('project_management.presentation.tracks.remove', [
                     'projectUuid' => $projectUuid,
                     'trackUuid'   => $assignment->trackUuid,
-                ])
+                ]),
+                $hasAudioFile,
+                $hasAudioFile ? $this->urlGenerator->generate('file_export.presentation.export', ['trackUuid' => $assignment->trackUuid, 'format' => 'mp3']) : null,
+                $hasAudioFile ? $this->urlGenerator->generate('file_export.presentation.export', ['trackUuid' => $assignment->trackUuid, 'format' => 'wav']) : null
             );
         }
 
@@ -64,7 +73,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
 
             $availableTracks[] = new ProjectTrackOptionViewDto(
                 $track->uuid,
-                $this->buildTrackLabel($track->trackNumber, $track->beatName, $track->publishingName, $track->title)
+                $this->buildTrackOptionLabel($track->trackNumber, $track->beatName, $track->publishingName, $track->title)
             );
         }
 
@@ -73,8 +82,12 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $project->title,
             $project->categoryName,
             $project->createdAt->format('d.m.Y H:i'),
+            $hasExportableTracks,
+            $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'mp3']),
+            $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'wav']),
             $trackItems,
             $availableTracks,
+            $this->urlGenerator->generate('project_management.presentation.tracks.suggestions', ['projectUuid' => $projectUuid]),
             $mediaAsset === null ? null : new ProjectMediaAssetViewDto(
                 $mediaAsset->originalFilename,
                 $mediaAsset->mimeType,
@@ -94,10 +107,70 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
         );
     }
 
+    public function buildAvailableTrackSuggestions(string $projectUuid, ?string $query, int $limit): array
+    {
+        $searchQuery = trim((string) $query);
+        if ($searchQuery === '') {
+            return [];
+        }
+
+        $assignedTrackUuids = array_map(
+            static fn (ProjectTrackAssignmentDto $assignment): string => $assignment->trackUuid,
+            $this->projectManagementFacade->getTrackAssignmentsByProjectUuid($projectUuid)
+        );
+
+        $suggestions = [];
+        foreach ($this->trackManagementFacade->getAllTracksForSelection() as $track) {
+            if (in_array($track->uuid, $assignedTrackUuids, true)) {
+                continue;
+            }
+
+            if (!$this->matchesSuggestionQuery($track->title, $track->publishingName, $searchQuery)) {
+                continue;
+            }
+
+            $suggestions[] = new ProjectTrackOptionViewDto(
+                $track->uuid,
+                $this->buildTrackOptionLabel($track->trackNumber, $track->beatName, $track->publishingName, $track->title)
+            );
+
+            if (count($suggestions) >= $limit) {
+                break;
+            }
+        }
+
+        return $suggestions;
+    }
+
     private function buildTrackLabel(int $trackNumber, string $beatName, ?string $publishingName, string $title): string
     {
         $headline = $publishingName ?? $title;
 
         return sprintf('#%d - %s (%s)', $trackNumber, $headline, $beatName);
+    }
+
+    private function buildTrackOptionLabel(int $trackNumber, string $beatName, ?string $publishingName, string $title): string
+    {
+        $normalizedPublishingName = $publishingName === null ? '' : mb_strtolower(trim($publishingName));
+        $normalizedTitle          = mb_strtolower(trim($title));
+
+        if ($normalizedPublishingName !== '' && $normalizedPublishingName !== $normalizedTitle) {
+            return sprintf('#%d - %s / %s (%s)', $trackNumber, $publishingName, $title, $beatName);
+        }
+
+        return $this->buildTrackLabel($trackNumber, $beatName, $publishingName, $title);
+    }
+
+    private function matchesSuggestionQuery(string $title, ?string $publishingName, string $query): bool
+    {
+        if (mb_stripos($title, $query) !== false) {
+            return true;
+        }
+
+        if ($publishingName === null) {
+            return false;
+        }
+
+        return mb_stripos($publishingName, $query) !== false;
     }
 }

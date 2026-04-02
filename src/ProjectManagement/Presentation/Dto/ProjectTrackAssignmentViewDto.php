@@ -7,11 +7,14 @@ namespace App\ProjectManagement\Presentation\Dto;
 readonly class ProjectTrackAssignmentViewDto
 {
     public function __construct(
-        public string $trackUuid,
-        public string $label,
-        public int    $position,
-        public string $showUrl,
-        public string $removeUrl
+        public string  $trackUuid,
+        public string  $label,
+        public int     $position,
+        public string  $showUrl,
+        public string  $removeUrl,
+        public bool    $hasAudioFile,
+        public ?string $exportMp3Url,
+        public ?string $exportWavUrl
     ) {
     }
 }

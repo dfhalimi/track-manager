@@ -8,6 +8,8 @@ use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\RemoveTrackFromProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ReorderProjectTracksInputDto;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
+use App\ProjectManagement\Presentation\Dto\ProjectTrackOptionViewDto;
+use App\ProjectManagement\Presentation\Service\ProjectDetailPresentationServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,7 +21,8 @@ use ValueError;
 final class ProjectTrackController extends AbstractController
 {
     public function __construct(
-        private readonly ProjectManagementDomainServiceInterface $projectManagementDomainService
+        private readonly ProjectManagementDomainServiceInterface   $projectManagementDomainService,
+        private readonly ProjectDetailPresentationServiceInterface $projectDetailPresentationService
     ) {
     }
 
@@ -39,6 +42,24 @@ final class ProjectTrackController extends AbstractController
         }
 
         return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+    }
+
+    #[Route(path: '/projects/{projectUuid}/tracks/suggestions', name: 'project_management.presentation.tracks.suggestions', methods: [Request::METHOD_GET])]
+    public function suggestionsAction(Request $request, string $projectUuid): JsonResponse
+    {
+        return $this->json([
+            'suggestions' => array_map(
+                static fn (ProjectTrackOptionViewDto $track): array => [
+                    'trackUuid' => $track->trackUuid,
+                    'label'     => $track->label,
+                ],
+                $this->projectDetailPresentationService->buildAvailableTrackSuggestions(
+                    $projectUuid,
+                    $request->query->getString('q', ''),
+                    10
+                )
+            ),
+        ]);
     }
 
     #[Route(path: '/projects/{projectUuid}/tracks/{trackUuid}/remove', name: 'project_management.presentation.tracks.remove', methods: [Request::METHOD_POST])]
