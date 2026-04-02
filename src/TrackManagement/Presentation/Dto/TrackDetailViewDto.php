@@ -13,6 +13,7 @@ readonly class TrackDetailViewDto
     public function __construct(
         public string            $uuid,
         public int               $trackNumber,
+        public string            $createdAt,
         public string            $beatName,
         public string            $title,
         public ?string           $publishingName,

@@ -14,6 +14,7 @@ readonly class ProjectDetailViewDto
         public string                    $uuid,
         public string                    $title,
         public string                    $categoryName,
+        public string                    $createdAt,
         public array                     $tracks,
         public array                     $availableTracks,
         public ?ProjectMediaAssetViewDto $mediaAsset,

@@ -67,6 +67,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
         return new TrackDetailViewDto(
             $track->uuid,
             $track->trackNumber,
+            $track->createdAt->format('d.m.Y H:i'),
             $track->beatName,
             $track->title,
             $track->publishingName,
