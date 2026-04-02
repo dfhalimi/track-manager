@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\TrackManagement\Presentation\Controller;
 
 use App\TrackManagement\Domain\Dto\AddChecklistItemInputDto;
-use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\RemoveChecklistItemInputDto;
 use App\TrackManagement\Domain\Dto\RenameChecklistItemInputDto;
+use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\ToggleChecklistItemInputDto;
 use App\TrackManagement\Domain\Service\ChecklistDomainServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
+use ValueError;
 
 final class ChecklistController extends AbstractController
 {
@@ -94,7 +95,7 @@ final class ChecklistController extends AbstractController
             $orderedItemUuids = json_decode($request->request->getString('ordered_item_uuids'), true);
 
             if (!is_array($orderedItemUuids)) {
-                throw new \ValueError('Checklist reorder payload is invalid.');
+                throw new ValueError('Checklist reorder payload is invalid.');
             }
 
             $orderedItemUuids = array_values(

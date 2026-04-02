@@ -23,24 +23,24 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
     }
 
     /**
-     * @param list<int>|null $bpms
+     * @param list<float>|null  $bpms
+     * @param list<string>|null $musicalKeys
      */
     public function buildCreateFormViewDto(
         ?string $beatName = null,
         ?string $title = null,
         ?string $publishingName = null,
         ?array  $bpms = null,
-        ?string $musicalKey = null,
+        ?array  $musicalKeys = null,
         ?string $notes = null,
         ?string $isrc = null
     ): TrackFormViewDto {
         $trackNumber    = $this->trackManagementDomainService->getNextTrackNumberPreview();
         $beatName       = (string) ($beatName ?? '');
-        $bpms           = $bpms ?? [120];
-        $musicalKey     = (string) ($musicalKey ?? 'Amin');
-        $musicalKey     = MusicalKeyCatalog::canonicalize($musicalKey) ?? $musicalKey;
+        $bpms           = $bpms ?? [120.0];
+        $musicalKeys    = $this->normalizeMusicalKeys($musicalKeys ?? []);
         $suggestedTitle = $this->trackNamingDomainService->buildSuggestedTitle(
-            new TrackNamingInputDto($trackNumber, $beatName, $bpms, $musicalKey)
+            new TrackNamingInputDto($trackNumber, $beatName, $bpms, $musicalKeys)
         );
 
         return new TrackFormViewDto(
@@ -50,7 +50,7 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
             (string) ($title ?? $suggestedTitle),
             $publishingName,
             $bpms,
-            $musicalKey,
+            $musicalKeys,
             MusicalKeyCatalog::all(),
             $notes,
             $isrc,
@@ -63,7 +63,8 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
     }
 
     /**
-     * @param list<int>|null $bpms
+     * @param list<float>|null  $bpms
+     * @param list<string>|null $musicalKeys
      */
     public function buildEditFormViewDto(
         string  $trackUuid,
@@ -71,17 +72,16 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
         ?string $title = null,
         ?string $publishingName = null,
         ?array  $bpms = null,
-        ?string $musicalKey = null,
+        ?array  $musicalKeys = null,
         ?string $notes = null,
         ?string $isrc = null
     ): TrackFormViewDto {
-        $track               = $this->trackManagementFacade->getTrackByUuid($trackUuid);
-        $effectiveBeatName   = (string) ($beatName ?? $track->beatName);
-        $effectiveBpms       = $bpms ?? $track->bpms;
-        $effectiveMusicalKey = (string) ($musicalKey ?? $track->musicalKey);
-        $effectiveMusicalKey = MusicalKeyCatalog::canonicalize($effectiveMusicalKey) ?? $effectiveMusicalKey;
-        $suggestedTitle      = $this->trackNamingDomainService->buildUpdatedTitleSuggestion(
-            new TrackNamingInputDto($track->trackNumber, $effectiveBeatName, $effectiveBpms, $effectiveMusicalKey)
+        $track                = $this->trackManagementFacade->getTrackByUuid($trackUuid);
+        $effectiveBeatName    = (string) ($beatName ?? $track->beatName);
+        $effectiveBpms        = $bpms ?? $track->bpms;
+        $effectiveMusicalKeys = $this->normalizeMusicalKeys($musicalKeys ?? $track->musicalKeys);
+        $suggestedTitle       = $this->trackNamingDomainService->buildUpdatedTitleSuggestion(
+            new TrackNamingInputDto($track->trackNumber, $effectiveBeatName, $effectiveBpms, $effectiveMusicalKeys)
         );
 
         return new TrackFormViewDto(
@@ -91,7 +91,7 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
             (string) ($title ?? $track->title),
             $publishingName ?? $track->publishingName,
             $effectiveBpms,
-            $effectiveMusicalKey,
+            $effectiveMusicalKeys,
             MusicalKeyCatalog::all(),
             $notes ?? $track->notes,
             $isrc  ?? $track->isrc,
@@ -101,5 +101,27 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
             $suggestedTitle,
             true
         );
+    }
+
+    /**
+     * @param list<string> $musicalKeys
+     *
+     * @return list<string>
+     */
+    private function normalizeMusicalKeys(array $musicalKeys): array
+    {
+        $normalizedMusicalKeys = [];
+
+        foreach ($musicalKeys as $musicalKey) {
+            $trimmed = trim($musicalKey);
+            if ($trimmed === '') {
+                continue;
+            }
+
+            $canonical               = MusicalKeyCatalog::canonicalize($musicalKey);
+            $normalizedMusicalKeys[] = $canonical ?? $trimmed;
+        }
+
+        return $normalizedMusicalKeys;
     }
 }

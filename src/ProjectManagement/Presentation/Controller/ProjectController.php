@@ -22,10 +22,10 @@ final class ProjectController extends AbstractController
 {
     public function __construct(
         private readonly ProjectOverviewPresentationServiceInterface $projectOverviewPresentationService,
-        private readonly ProjectDetailPresentationServiceInterface $projectDetailPresentationService,
-        private readonly ProjectFormPresentationServiceInterface $projectFormPresentationService,
-        private readonly ProjectManagementDomainServiceInterface $projectManagementDomainService,
-        private readonly MediaAssetManagementFacadeInterface $mediaAssetManagementFacade
+        private readonly ProjectDetailPresentationServiceInterface   $projectDetailPresentationService,
+        private readonly ProjectFormPresentationServiceInterface     $projectFormPresentationService,
+        private readonly ProjectManagementDomainServiceInterface     $projectManagementDomainService,
+        private readonly MediaAssetManagementFacadeInterface         $mediaAssetManagementFacade
     ) {
     }
 

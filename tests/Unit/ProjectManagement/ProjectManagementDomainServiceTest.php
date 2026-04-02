@@ -233,7 +233,7 @@ final class InMemoryProjectRepository implements ProjectRepositoryInterface
         return $this->projectsByUuid[$projectUuid] ?? null;
     }
 
-    public function findAllByFilter(\App\ProjectManagement\Domain\Dto\ProjectListFilterDto $filter): array
+    public function findAllByFilter(App\ProjectManagement\Domain\Dto\ProjectListFilterDto $filter): array
     {
         return array_values($this->projectsByUuid);
     }

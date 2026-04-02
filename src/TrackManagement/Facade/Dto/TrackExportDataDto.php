@@ -7,7 +7,8 @@ namespace App\TrackManagement\Facade\Dto;
 readonly class TrackExportDataDto
 {
     /**
-     * @param list<int> $bpms
+     * @param list<float>  $bpms
+     * @param list<string> $musicalKeys
      */
     public function __construct(
         public string $trackUuid,
@@ -15,7 +16,7 @@ readonly class TrackExportDataDto
         public string $beatName,
         public string $title,
         public array  $bpms,
-        public string $musicalKey
+        public array  $musicalKeys
     ) {
     }
 }

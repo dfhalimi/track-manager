@@ -4,6 +4,8 @@ import {
     removeCsrfToken,
 } from "../../assets/controllers/csrf_protection_controller.js";
 
+type RandomValuesInput = Parameters<Crypto["getRandomValues"]>[0];
+
 function createFormWithCsrfField(initialValue: string): { form: HTMLFormElement; field: HTMLInputElement } {
     const form = document.createElement("form");
     const field = document.createElement("input");
@@ -14,6 +16,16 @@ function createFormWithCsrfField(initialValue: string): { form: HTMLFormElement;
     document.body.appendChild(form);
 
     return { form, field };
+}
+
+function mockRandomValues(array: RandomValuesInput): RandomValuesInput {
+    const view = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
+
+    for (let i = 0; i < view.length; i += 1) {
+        view[i] = (i + 1) % 256;
+    }
+
+    return array;
 }
 
 describe("csrf_protection_controller", () => {
@@ -32,12 +44,7 @@ describe("csrf_protection_controller", () => {
         const changeSpy = vi.fn();
         field.addEventListener("change", changeSpy);
 
-        vi.spyOn(window.crypto, "getRandomValues").mockImplementation((arr: Uint8Array): Uint8Array => {
-            for (let i = 0; i < arr.length; i += 1) {
-                arr[i] = (i + 1) % 256;
-            }
-            return arr;
-        });
+        vi.spyOn(window.crypto, "getRandomValues").mockImplementation(mockRandomValues);
 
         generateCsrfToken(form);
 
@@ -54,12 +61,7 @@ describe("csrf_protection_controller", () => {
     it("generates csrf headers when cookie name and token look valid", () => {
         const { form, field } = createFormWithCsrfField("csrfCookieName");
 
-        vi.spyOn(window.crypto, "getRandomValues").mockImplementation((arr: Uint8Array): Uint8Array => {
-            for (let i = 0; i < arr.length; i += 1) {
-                arr[i] = (i + 1) % 256;
-            }
-            return arr;
-        });
+        vi.spyOn(window.crypto, "getRandomValues").mockImplementation(mockRandomValues);
 
         generateCsrfToken(form);
 
@@ -77,12 +79,7 @@ describe("csrf_protection_controller", () => {
     it("removes csrf cookie after submission", () => {
         const { form, field } = createFormWithCsrfField("csrfCookieName");
 
-        vi.spyOn(window.crypto, "getRandomValues").mockImplementation((arr: Uint8Array): Uint8Array => {
-            for (let i = 0; i < arr.length; i += 1) {
-                arr[i] = (i + 1) % 256;
-            }
-            return arr;
-        });
+        vi.spyOn(window.crypto, "getRandomValues").mockImplementation(mockRandomValues);
 
         generateCsrfToken(form);
         expect(document.cookie).not.toBe("");

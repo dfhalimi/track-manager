@@ -10,7 +10,7 @@ readonly class ProjectListItemViewDto
         public string $uuid,
         public string $title,
         public string $categoryName,
-        public int $trackCount,
+        public int    $trackCount,
         public string $showUrl,
         public string $editUrl
     ) {

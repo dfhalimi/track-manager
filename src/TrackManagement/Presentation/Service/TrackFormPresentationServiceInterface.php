@@ -9,20 +9,22 @@ use App\TrackManagement\Presentation\Dto\TrackFormViewDto;
 interface TrackFormPresentationServiceInterface
 {
     /**
-     * @param list<int>|null $bpms
+     * @param list<float>|null  $bpms
+     * @param list<string>|null $musicalKeys
      */
     public function buildCreateFormViewDto(
         ?string $beatName = null,
         ?string $title = null,
         ?string $publishingName = null,
         ?array  $bpms = null,
-        ?string $musicalKey = null,
+        ?array  $musicalKeys = null,
         ?string $notes = null,
         ?string $isrc = null
     ): TrackFormViewDto;
 
     /**
-     * @param list<int>|null $bpms
+     * @param list<float>|null  $bpms
+     * @param list<string>|null $musicalKeys
      */
     public function buildEditFormViewDto(
         string  $trackUuid,
@@ -30,7 +32,7 @@ interface TrackFormPresentationServiceInterface
         ?string $title = null,
         ?string $publishingName = null,
         ?array  $bpms = null,
-        ?string $musicalKey = null,
+        ?array  $musicalKeys = null,
         ?string $notes = null,
         ?string $isrc = null
     ): TrackFormViewDto;

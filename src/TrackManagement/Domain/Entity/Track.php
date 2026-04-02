@@ -31,13 +31,16 @@ class Track
     private ?string $publishingName = null;
 
     /**
-     * @var list<int>
+     * @var list<float>
      */
     #[ORM\Column(name: 'bpms', type: Types::JSON)]
     private array $bpms = [];
 
-    #[ORM\Column(name: 'musical_key', type: Types::STRING, length: 32)]
-    private string $musicalKey;
+    /**
+     * @var list<string>
+     */
+    #[ORM\Column(name: 'musical_keys', type: Types::JSON)]
+    private array $musicalKeys = [];
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
@@ -102,7 +105,7 @@ class Track
     }
 
     /**
-     * @return list<int>
+     * @return list<float>
      */
     public function getBpms(): array
     {
@@ -110,21 +113,27 @@ class Track
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      */
     public function setBpms(array $bpms): void
     {
         $this->bpms = $bpms;
     }
 
-    public function getMusicalKey(): string
+    /**
+     * @return list<string>
+     */
+    public function getMusicalKeys(): array
     {
-        return $this->musicalKey;
+        return $this->musicalKeys;
     }
 
-    public function setMusicalKey(string $musicalKey): void
+    /**
+     * @param list<string> $musicalKeys
+     */
+    public function setMusicalKeys(array $musicalKeys): void
     {
-        $this->musicalKey = $musicalKey;
+        $this->musicalKeys = $musicalKeys;
     }
 
     public function getNotes(): ?string

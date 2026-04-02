@@ -45,7 +45,7 @@ export default class extends Controller<HTMLElement> {
         }
 
         const hoveredBounds = hoveredItem.getBoundingClientRect();
-        const shouldInsertBefore = event.clientY < hoveredBounds.top + (hoveredBounds.height / 2);
+        const shouldInsertBefore = event.clientY < hoveredBounds.top + hoveredBounds.height / 2;
 
         if (shouldInsertBefore) {
             hoveredItem.before(this.draggedItem);
@@ -98,7 +98,7 @@ export default class extends Controller<HTMLElement> {
                 },
             });
 
-            const payload = await response.json() as { message?: string };
+            const payload = (await response.json()) as { message?: string };
 
             if (!response.ok) {
                 throw new Error(payload.message ?? "Die neue Reihenfolge konnte nicht gespeichert werden.");
@@ -107,9 +107,8 @@ export default class extends Controller<HTMLElement> {
             this.setStatus(payload.message ?? "Projekt-Reihenfolge wurde gespeichert.", false);
             window.setTimeout((): void => this.clearStatus(), 2000);
         } catch (error) {
-            const message = error instanceof Error
-                ? error.message
-                : "Die neue Reihenfolge konnte nicht gespeichert werden.";
+            const message =
+                error instanceof Error ? error.message : "Die neue Reihenfolge konnte nicht gespeichert werden.";
 
             this.setStatus(message, true);
         } finally {
@@ -123,9 +122,7 @@ export default class extends Controller<HTMLElement> {
         }
 
         this.statusTarget.textContent = message;
-        this.statusTarget.className = isError
-            ? "mt-3 text-sm text-red-700"
-            : "mt-3 text-sm text-emerald-700";
+        this.statusTarget.className = isError ? "mt-3 text-sm text-red-700" : "mt-3 text-sm text-emerald-700";
     }
 
     private clearStatus(): void {

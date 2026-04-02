@@ -17,6 +17,8 @@ use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeServ
 use Symfony\Component\Uid\Uuid;
 use ValueError;
 
+use function abs;
+
 readonly class TrackManagementDomainService implements TrackManagementDomainServiceInterface
 {
     public function __construct(
@@ -43,8 +45,8 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $track->setTrackNumber($trackNumber);
         $track->setBeatName(trim($input->beatName));
         $track->setBpms($this->normalizeBpms($input->bpms));
-        $track->setMusicalKey($this->normalizeMusicalKey($input->musicalKey));
-        $track->setTitle($this->resolveTitle($trackNumber, $input->beatName, $input->bpms, $input->musicalKey, $input->title));
+        $track->setMusicalKeys($this->normalizeMusicalKeys($input->musicalKeys));
+        $track->setTitle($this->resolveTitle($trackNumber, $input->beatName, $input->bpms, $input->musicalKeys, $input->title));
         $track->setPublishingName($this->normalizeNullableString($input->publishingName));
         $track->setNotes($this->normalizeNullableString($input->notes));
         $track->setIsrc($this->normalizeNullableString($input->isrc));
@@ -65,7 +67,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
 
         $track->setBeatName(trim($input->beatName));
         $track->setBpms($this->normalizeBpms($input->bpms));
-        $track->setMusicalKey($this->normalizeMusicalKey($input->musicalKey));
+        $track->setMusicalKeys($this->normalizeMusicalKeys($input->musicalKeys));
         $track->setTitle(
             $input->replaceTitleWithSuggestion
                 ? $this->trackNamingDomainService->buildUpdatedTitleSuggestion(
@@ -73,7 +75,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
                         $track->getTrackNumber(),
                         $input->beatName,
                         $input->bpms,
-                        $input->musicalKey
+                        $input->musicalKeys
                     )
                 )
                 : trim($input->title)
@@ -132,7 +134,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
                 $track->getTitle(),
                 $track->getPublishingName(),
                 $track->getBpms(),
-                $track->getMusicalKey(),
+                $track->getMusicalKeys(),
                 $this->progressCalculator->calculateProgress($checklistItems),
                 $status->value,
                 false,
@@ -162,7 +164,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
             usort(
                 $items,
                 fn (TrackListItemDto $left, TrackListItemDto $right): int => $filter->sortDirection === 'ASC'
-                    ? $this->extractPrimaryBpm($left->bpms) <=> $this->extractPrimaryBpm($right->bpms)
+                    ? $this->extractPrimaryBpm($left->bpms)  <=> $this->extractPrimaryBpm($right->bpms)
                     : $this->extractPrimaryBpm($right->bpms) <=> $this->extractPrimaryBpm($left->bpms)
             );
         }
@@ -188,25 +190,36 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
             if ($bpm <= 0) {
                 throw new ValueError('All BPM values must be greater than zero.');
             }
+
+            if (abs($bpm - round($bpm, 3)) >= 0.000001) {
+                throw new ValueError('All BPM values must have at most 3 decimal places.');
+            }
         }
 
-        if (trim($track->getMusicalKey()) === '') {
-            throw new ValueError('Musical key must not be empty.');
+        if ($track->getMusicalKeys() === []) {
+            throw new ValueError('At least one musical key is required.');
         }
 
-        if (MusicalKeyCatalog::canonicalize($track->getMusicalKey()) === null) {
-            throw new ValueError('Musical key must be selected from the supported list.');
+        foreach ($track->getMusicalKeys() as $musicalKey) {
+            if (trim($musicalKey) === '') {
+                throw new ValueError('Musical keys must not be empty.');
+            }
+
+            if (MusicalKeyCatalog::canonicalize($musicalKey) === null) {
+                throw new ValueError('Musical keys must be selected from the supported list.');
+            }
         }
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float>  $bpms
+     * @param list<string> $musicalKeys
      */
     private function resolveTitle(
         int    $trackNumber,
         string $beatName,
         array  $bpms,
-        string $musicalKey,
+        array  $musicalKeys,
         string $submittedTitle
     ): string {
         $submittedTitle = trim($submittedTitle);
@@ -215,32 +228,47 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
             return $submittedTitle;
         }
 
-        return $this->trackNamingDomainService->buildSuggestedTitle(new TrackNamingInputDto($trackNumber, $beatName, $bpms, $musicalKey));
+        return $this->trackNamingDomainService->buildSuggestedTitle(new TrackNamingInputDto($trackNumber, $beatName, $bpms, $musicalKeys));
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      *
-     * @return list<int>
+     * @return list<float>
      */
     private function normalizeBpms(array $bpms): array
     {
         return $bpms;
     }
 
-    private function normalizeMusicalKey(string $musicalKey): string
+    /**
+     * @param list<string> $musicalKeys
+     *
+     * @return list<string>
+     */
+    private function normalizeMusicalKeys(array $musicalKeys): array
     {
-        $canonical = MusicalKeyCatalog::canonicalize($musicalKey);
+        $normalizedMusicalKeys = [];
 
-        return $canonical ?? trim($musicalKey);
+        foreach ($musicalKeys as $musicalKey) {
+            $trimmed = trim($musicalKey);
+            if ($trimmed === '') {
+                continue;
+            }
+
+            $canonical               = MusicalKeyCatalog::canonicalize($musicalKey);
+            $normalizedMusicalKeys[] = $canonical ?? $trimmed;
+        }
+
+        return $normalizedMusicalKeys;
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      */
-    private function extractPrimaryBpm(array $bpms): int
+    private function extractPrimaryBpm(array $bpms): float
     {
-        return $bpms[0] ?? 0;
+        return $bpms[0] ?? 0.0;
     }
 
     private function normalizeNullableString(?string $value): ?string

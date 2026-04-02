@@ -14,7 +14,7 @@ interface ProjectFormPresentationServiceInterface
     ): ProjectFormViewDto;
 
     public function buildEditFormViewDto(
-        string $projectUuid,
+        string  $projectUuid,
         ?string $title = null,
         ?string $categoryName = null
     ): ProjectFormViewDto;

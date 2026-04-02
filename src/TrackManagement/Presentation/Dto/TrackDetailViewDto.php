@@ -7,7 +7,7 @@ namespace App\TrackManagement\Presentation\Dto;
 readonly class TrackDetailViewDto
 {
     /**
-     * @param list<ChecklistItemViewDto> $checklistItems
+     * @param list<ChecklistItemViewDto>          $checklistItems
      * @param list<TrackProjectMembershipViewDto> $projectMemberships
      */
     public function __construct(
@@ -17,7 +17,7 @@ readonly class TrackDetailViewDto
         public string            $title,
         public ?string           $publishingName,
         public string            $bpmLabel,
-        public string            $musicalKey,
+        public string            $musicalKeyLabel,
         public ?string           $notes,
         public ?string           $isrc,
         public int               $progress,

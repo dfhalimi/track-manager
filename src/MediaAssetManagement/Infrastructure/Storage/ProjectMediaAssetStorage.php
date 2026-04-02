@@ -23,9 +23,9 @@ readonly class ProjectMediaAssetStorage implements ProjectMediaAssetStorageInter
         }
 
         $resolvedPath = $this->resolveStoragePath($storageFilename);
-        $mimeType = (string) ($file->getClientMimeType() ?: $file->getMimeType() ?: 'application/octet-stream');
-        $sizeBytes = (int) $file->getSize();
-        $extension = mb_strtolower((string) pathinfo($storageFilename, PATHINFO_EXTENSION));
+        $mimeType     = (string) ($file->getClientMimeType() ?: $file->getMimeType() ?: 'application/octet-stream');
+        $sizeBytes    = (int) $file->getSize();
+        $extension    = mb_strtolower((string) pathinfo($storageFilename, PATHINFO_EXTENSION));
 
         $file->move($storageDirectory, $storageFilename);
 

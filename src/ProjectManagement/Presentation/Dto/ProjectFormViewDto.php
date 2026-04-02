@@ -11,13 +11,13 @@ readonly class ProjectFormViewDto
      */
     public function __construct(
         public ?string $projectUuid,
-        public string $title,
-        public string $categoryName,
-        public array $categoryOptions,
-        public string $formAction,
-        public string $cancelUrl,
-        public string $submitLabel,
-        public bool $isEditMode
+        public string  $title,
+        public string  $categoryName,
+        public array   $categoryOptions,
+        public string  $formAction,
+        public string  $cancelUrl,
+        public string  $submitLabel,
+        public bool    $isEditMode
     ) {
     }
 }

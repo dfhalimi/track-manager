@@ -16,19 +16,19 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 readonly class ProjectDetailPresentationService implements ProjectDetailPresentationServiceInterface
 {
     public function __construct(
-        private ProjectManagementFacadeInterface $projectManagementFacade,
-        private TrackManagementFacadeInterface $trackManagementFacade,
+        private ProjectManagementFacadeInterface    $projectManagementFacade,
+        private TrackManagementFacadeInterface      $trackManagementFacade,
         private MediaAssetManagementFacadeInterface $mediaAssetManagementFacade,
-        private UrlGeneratorInterface $urlGenerator
+        private UrlGeneratorInterface               $urlGenerator
     ) {
     }
 
     public function buildProjectDetailViewDto(string $projectUuid): ProjectDetailViewDto
     {
-        $project = $this->projectManagementFacade->getProjectByUuid($projectUuid);
+        $project     = $this->projectManagementFacade->getProjectByUuid($projectUuid);
         $assignments = $this->projectManagementFacade->getTrackAssignmentsByProjectUuid($projectUuid);
-        $allTracks = $this->trackManagementFacade->getAllTracksForSelection();
-        $mediaAsset = $this->mediaAssetManagementFacade->getCurrentProjectMediaAssetByProjectUuid($projectUuid);
+        $allTracks   = $this->trackManagementFacade->getAllTracksForSelection();
+        $mediaAsset  = $this->mediaAssetManagementFacade->getCurrentProjectMediaAssetByProjectUuid($projectUuid);
 
         $tracksByUuid = [];
         foreach ($allTracks as $track) {
@@ -36,7 +36,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
         }
 
         $assignedTrackUuids = [];
-        $trackItems = [];
+        $trackItems         = [];
         foreach ($assignments as $assignment) {
             $track = $tracksByUuid[$assignment->trackUuid] ?? null;
             if ($track === null) {
@@ -44,14 +44,14 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             }
 
             $assignedTrackUuids[] = $assignment->trackUuid;
-            $trackItems[] = new ProjectTrackAssignmentViewDto(
+            $trackItems[]         = new ProjectTrackAssignmentViewDto(
                 $assignment->trackUuid,
                 $this->buildTrackLabel($track->trackNumber, $track->beatName, $track->publishingName, $track->title),
                 $assignment->position,
                 $this->urlGenerator->generate('track_management.presentation.show', ['trackUuid' => $assignment->trackUuid]),
                 $this->urlGenerator->generate('project_management.presentation.tracks.remove', [
                     'projectUuid' => $projectUuid,
-                    'trackUuid' => $assignment->trackUuid,
+                    'trackUuid'   => $assignment->trackUuid,
                 ])
             );
         }

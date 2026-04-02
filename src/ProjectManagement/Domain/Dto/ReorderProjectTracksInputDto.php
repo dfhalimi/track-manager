@@ -11,7 +11,7 @@ readonly class ReorderProjectTracksInputDto
      */
     public function __construct(
         public string $projectUuid,
-        public array $orderedTrackUuids
+        public array  $orderedTrackUuids
     ) {
     }
 }

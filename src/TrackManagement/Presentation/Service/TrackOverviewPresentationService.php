@@ -46,7 +46,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
                 $item->title,
                 $item->publishingName,
                 $this->formatBpms($item->bpms),
-                $item->musicalKey,
+                $this->formatMusicalKeys($item->musicalKeys),
                 $status->getLabel(),
                 $status->value,
                 $item->progress,
@@ -68,10 +68,26 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
     }
 
     /**
-     * @param list<int> $bpms
+     * @param list<float> $bpms
      */
     private function formatBpms(array $bpms): string
     {
-        return implode(', ', array_map(static fn (int $bpm): string => (string) $bpm, $bpms));
+        return implode(', ', array_map(fn (float $bpm): string => $this->formatBpm($bpm), $bpms));
+    }
+
+    /**
+     * @param list<string> $musicalKeys
+     */
+    private function formatMusicalKeys(array $musicalKeys): string
+    {
+        return implode(', ', $musicalKeys);
+    }
+
+    private function formatBpm(float $bpm): string
+    {
+        $formattedBpm = number_format($bpm, 3, '.', '');
+        $formattedBpm = rtrim($formattedBpm, '0');
+
+        return rtrim($formattedBpm, '.');
     }
 }

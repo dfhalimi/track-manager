@@ -71,9 +71,9 @@ class ProjectRepository extends ServiceEntityRepository implements ProjectReposi
         }
 
         $sortBy = match ($filter->sortBy) {
-            'title' => 'project.title',
+            'title'     => 'project.title',
             'createdAt' => 'project.createdAt',
-            default => 'project.updatedAt',
+            default     => 'project.updatedAt',
         };
 
         $sortDirection = strtoupper((string) ($filter->sortDirection ?? 'DESC')) === 'ASC' ? 'ASC' : 'DESC';

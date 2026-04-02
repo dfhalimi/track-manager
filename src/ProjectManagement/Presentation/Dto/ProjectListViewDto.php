@@ -8,13 +8,13 @@ readonly class ProjectListViewDto
 {
     /**
      * @param list<ProjectListItemViewDto> $items
-     * @param list<string> $categoryOptions
+     * @param list<string>                 $categoryOptions
      */
     public function __construct(
-        public array $items,
+        public array  $items,
         public string $searchQuery,
         public string $categoryFilter,
-        public array $categoryOptions,
+        public array  $categoryOptions,
         public string $sortBy,
         public string $sortDirection,
         public string $createUrl,

@@ -11,9 +11,9 @@ readonly class StoredProjectMediaAssetDto
         public string $storagePath,
         public string $extension,
         public string $mimeType,
-        public int $sizeBytes,
-        public int $widthPixels,
-        public int $heightPixels
+        public int    $sizeBytes,
+        public int    $widthPixels,
+        public int    $heightPixels
     ) {
     }
 }

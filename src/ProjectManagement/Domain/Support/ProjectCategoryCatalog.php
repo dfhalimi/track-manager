@@ -16,14 +16,14 @@ final class ProjectCategoryCatalog
 
     public static function normalizeDisplayName(string $value): string
     {
-        $collapsed = preg_replace('/\s+/', ' ', trim($value)) ?? trim($value);
+        $collapsed  = preg_replace('/\s+/', ' ', trim($value)) ?? trim($value);
         $normalized = self::normalizeStorageValue($collapsed);
 
         return match ($normalized) {
             'single' => 'Single',
-            'ep' => 'EP',
-            'album' => 'Album',
-            default => $collapsed,
+            'ep'     => 'EP',
+            'album'  => 'Album',
+            default  => $collapsed,
         };
     }
 

@@ -27,10 +27,10 @@ use ValueError;
 readonly class ProjectManagementDomainService implements ProjectManagementDomainServiceInterface
 {
     public function __construct(
-        private ProjectRepositoryInterface $projectRepository,
-        private ProjectCategoryRepositoryInterface $projectCategoryRepository,
+        private ProjectRepositoryInterface                $projectRepository,
+        private ProjectCategoryRepositoryInterface        $projectCategoryRepository,
         private ProjectTrackAssignmentRepositoryInterface $projectTrackAssignmentRepository,
-        private TrackManagementFacadeInterface $trackManagementFacade
+        private TrackManagementFacadeInterface            $trackManagementFacade
     ) {
     }
 
@@ -105,7 +105,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             usort(
                 $items,
                 fn (ProjectListItemDto $left, ProjectListItemDto $right): int => strtoupper((string) ($filter->sortDirection ?? 'DESC')) === 'ASC'
-                    ? $left->trackCount <=> $right->trackCount
+                    ? $left->trackCount  <=> $right->trackCount
                     : $right->trackCount <=> $left->trackCount
             );
         }
@@ -153,7 +153,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     public function removeTrackFromProject(RemoveTrackFromProjectInputDto $input): void
     {
-        $project = $this->projectRepository->getByUuid($input->projectUuid);
+        $project    = $this->projectRepository->getByUuid($input->projectUuid);
         $assignment = $this->projectTrackAssignmentRepository->findByProjectUuidAndTrackUuid($input->projectUuid, $input->trackUuid);
 
         if ($assignment === null) {
@@ -168,8 +168,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     public function reorderProjectTracks(ReorderProjectTracksInputDto $input): void
     {
-        $project = $this->projectRepository->getByUuid($input->projectUuid);
-        $assignments = $this->projectTrackAssignmentRepository->findByProjectUuid($input->projectUuid);
+        $project           = $this->projectRepository->getByUuid($input->projectUuid);
+        $assignments       = $this->projectTrackAssignmentRepository->findByProjectUuid($input->projectUuid);
         $orderedTrackUuids = $input->orderedTrackUuids;
 
         if (count(array_unique($orderedTrackUuids)) !== count($orderedTrackUuids)) {
@@ -205,7 +205,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     public function removeTrackFromAllProjects(string $trackUuid): void
     {
-        $assignments = $this->projectTrackAssignmentRepository->findByTrackUuid($trackUuid);
+        $assignments          = $this->projectTrackAssignmentRepository->findByTrackUuid($trackUuid);
         $affectedProjectUuids = array_values(
             array_unique(
                 array_map(
@@ -228,7 +228,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     private function resolveCategory(string $categoryName): ProjectCategory
     {
-        $displayName = ProjectCategoryCatalog::normalizeDisplayName($categoryName);
+        $displayName    = ProjectCategoryCatalog::normalizeDisplayName($categoryName);
         $normalizedName = ProjectCategoryCatalog::normalizeStorageValue($displayName);
 
         if ($displayName === '' || $normalizedName === '') {
@@ -279,7 +279,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     private function resequenceAssignments(string $projectUuid): void
     {
-        $assignments = $this->projectTrackAssignmentRepository->findByProjectUuid($projectUuid);
+        $assignments        = $this->projectTrackAssignmentRepository->findByProjectUuid($projectUuid);
         $changedAssignments = [];
 
         foreach ($assignments as $index => $assignment) {

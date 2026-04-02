@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
+use ValueError;
 
 final class ProjectTrackController extends AbstractController
 {
@@ -61,7 +62,7 @@ final class ProjectTrackController extends AbstractController
         try {
             $orderedTrackUuids = json_decode($request->request->getString('ordered_track_uuids', '[]'), true, 512, JSON_THROW_ON_ERROR);
             if (!is_array($orderedTrackUuids)) {
-                throw new \ValueError('Track-Reihenfolge muss als Liste übergeben werden.');
+                throw new ValueError('Track-Reihenfolge muss als Liste übergeben werden.');
             }
 
             $this->projectManagementDomainService->reorderProjectTracks(
