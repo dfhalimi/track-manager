@@ -28,6 +28,12 @@ class Project
     #[ORM\Column(name: 'category_uuid', type: Types::GUID)]
     private string $categoryUuid;
 
+    /**
+     * @var list<string>
+     */
+    #[ORM\Column(type: Types::JSON)]
+    private array $artists = [];
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
 
@@ -72,6 +78,22 @@ class Project
     public function setCategoryUuid(string $categoryUuid): void
     {
         $this->categoryUuid = $categoryUuid;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getArtists(): array
+    {
+        return $this->artists;
+    }
+
+    /**
+     * @param list<string> $artists
+     */
+    public function setArtists(array $artists): void
+    {
+        $this->artists = $artists;
     }
 
     public function getCreatedAt(): DateTimeImmutable

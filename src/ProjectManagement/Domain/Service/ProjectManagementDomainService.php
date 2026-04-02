@@ -43,6 +43,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setTitle($this->normalizeTitle($input->title));
         $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
         $project->setCategoryUuid($this->resolveCategory($input->categoryName)->getUuid());
+        $project->setArtists($this->normalizeArtists($input->artists));
         $project->setCreatedAt($now);
         $project->setUpdatedAt($now);
 
@@ -59,6 +60,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setTitle($this->normalizeTitle($input->title));
         $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
         $project->setCategoryUuid($this->resolveCategory($input->categoryName)->getUuid());
+        $project->setArtists($this->normalizeArtists($input->artists));
         $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
 
         $this->validateProject($project);
@@ -148,6 +150,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
                 $project->getUuid(),
                 $project->getTitle(),
                 $this->projectCategoryRepository->getByUuid($project->getCategoryUuid())->getName(),
+                $project->getArtists(),
                 count($this->projectTrackAssignmentRepository->findByProjectUuid($project->getUuid())),
                 $project->getUpdatedAt()
             );
@@ -337,6 +340,34 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
     private function normalizeStorageTitle(string $title): string
     {
         return mb_strtolower($this->normalizeTitle($title));
+    }
+
+    /**
+     * @param list<string> $artists
+     *
+     * @return list<string>
+     */
+    private function normalizeArtists(array $artists): array
+    {
+        $normalizedArtists = [];
+        $knownArtists      = [];
+
+        foreach ($artists as $artist) {
+            $normalizedArtist = $this->normalizeTitle($artist);
+            if ($normalizedArtist === '') {
+                continue;
+            }
+
+            $normalizedStorageArtist = mb_strtolower($normalizedArtist);
+            if (array_key_exists($normalizedStorageArtist, $knownArtists)) {
+                continue;
+            }
+
+            $knownArtists[$normalizedStorageArtist] = true;
+            $normalizedArtists[]                    = $normalizedArtist;
+        }
+
+        return $normalizedArtists;
     }
 
     private function resequenceAssignments(string $projectUuid): void

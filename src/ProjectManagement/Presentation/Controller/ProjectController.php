@@ -84,7 +84,8 @@ final class ProjectController extends AbstractController
                 $project = $this->projectManagementDomainService->createProject(
                     new CreateProjectInputDto(
                         $request->request->getString('title'),
-                        $request->request->getString('category_name')
+                        $request->request->getString('category_name'),
+                        $this->filterArtists($request->request->all('artists'))
                     )
                 );
 
@@ -103,7 +104,8 @@ final class ProjectController extends AbstractController
         return $this->render('@projectmanagement.presentation/form.html.twig', [
             'view' => $this->projectFormPresentationService->buildCreateFormViewDto(
                 $request->request->getString('title', ''),
-                $request->request->getString('category_name', '')
+                $request->request->getString('category_name', ''),
+                $this->filterArtists($request->request->all('artists'))
             ),
         ]);
     }
@@ -125,7 +127,8 @@ final class ProjectController extends AbstractController
                     new UpdateProjectInputDto(
                         $projectUuid,
                         $request->request->getString('title'),
-                        $request->request->getString('category_name')
+                        $request->request->getString('category_name'),
+                        $this->filterArtists($request->request->all('artists'))
                     )
                 );
 
@@ -146,7 +149,8 @@ final class ProjectController extends AbstractController
             'view' => $this->projectFormPresentationService->buildEditFormViewDto(
                 $projectUuid,
                 $request->request->getString('title', '') ?: null,
-                $request->request->getString('category_name', '') ?: null
+                $request->request->getString('category_name', '') ?: null,
+                $this->filterArtists($request->request->all('artists'))
             ),
         ]);
     }
@@ -165,5 +169,20 @@ final class ProjectController extends AbstractController
         $this->addFlash('success', 'Projekt wurde gelöscht.');
 
         return $this->redirectToRoute('project_management.presentation.index');
+    }
+
+    /**
+     * @param array<mixed> $artists
+     *
+     * @return list<string>
+     */
+    private function filterArtists(array $artists): array
+    {
+        return array_values(
+            array_filter(
+                $artists,
+                static fn (mixed $artist): bool => is_string($artist)
+            )
+        );
     }
 }

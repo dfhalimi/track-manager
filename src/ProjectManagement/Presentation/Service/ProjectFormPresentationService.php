@@ -19,12 +19,14 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
 
     public function buildCreateFormViewDto(
         ?string $title = null,
-        ?string $categoryName = null
+        ?string $categoryName = null,
+        ?array  $artists = null
     ): ProjectFormViewDto {
         return new ProjectFormViewDto(
             null,
             (string) ($title ?? ''),
             (string) ($categoryName ?? 'Single'),
+            $this->normalizeArtistsForForm($artists),
             $this->buildCategoryOptions(),
             $this->urlGenerator->generate('project_management.presentation.create'),
             $this->urlGenerator->generate('project_management.presentation.index'),
@@ -36,7 +38,8 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
     public function buildEditFormViewDto(
         string  $projectUuid,
         ?string $title = null,
-        ?string $categoryName = null
+        ?string $categoryName = null,
+        ?array  $artists = null
     ): ProjectFormViewDto {
         $project  = $this->projectManagementDomainService->getProjectByUuid($projectUuid);
         $category = $this->projectManagementDomainService->getProjectCategoryByUuid($project->getCategoryUuid());
@@ -45,6 +48,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             $project->getUuid(),
             (string) ($title ?? $project->getTitle()),
             (string) ($categoryName ?? $category->getName()),
+            $this->normalizeArtistsForForm($artists ?? $project->getArtists()),
             $this->buildCategoryOptions(),
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $projectUuid]),
@@ -62,5 +66,17 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             static fn (ProjectCategory $category): string => $category->getName(),
             $this->projectManagementDomainService->getAllProjectCategories()
         );
+    }
+
+    /**
+     * @param ?list<string> $artists
+     *
+     * @return list<string>
+     */
+    private function normalizeArtistsForForm(?array $artists): array
+    {
+        $artists = $artists ?? [];
+
+        return $artists === [] ? [''] : $artists;
     }
 }
