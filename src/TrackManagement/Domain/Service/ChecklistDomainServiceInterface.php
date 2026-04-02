@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\TrackManagement\Domain\Service;
 
 use App\TrackManagement\Domain\Dto\AddChecklistItemInputDto;
-use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\RemoveChecklistItemInputDto;
 use App\TrackManagement\Domain\Dto\RenameChecklistItemInputDto;
+use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\ToggleChecklistItemInputDto;
 use App\TrackManagement\Domain\Entity\ChecklistItem;
 

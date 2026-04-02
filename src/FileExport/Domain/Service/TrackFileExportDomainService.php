@@ -71,7 +71,7 @@ readonly class TrackFileExportDomainService implements TrackFileExportDomainServ
                 $trackExportData->trackNumber,
                 $trackExportData->beatName,
                 $bpms,
-                $trackExportData->musicalKey
+                implode('_', $trackExportData->musicalKeys)
             );
         }
 

@@ -9,7 +9,8 @@ use DateTimeImmutable;
 readonly class TrackDto
 {
     /**
-     * @param list<int> $bpms
+     * @param list<int>    $bpms
+     * @param list<string> $musicalKeys
      */
     public function __construct(
         public string            $uuid,
@@ -18,7 +19,7 @@ readonly class TrackDto
         public string            $title,
         public ?string           $publishingName,
         public array             $bpms,
-        public string            $musicalKey,
+        public array             $musicalKeys,
         public ?string           $notes,
         public ?string           $isrc,
         public DateTimeImmutable $createdAt,

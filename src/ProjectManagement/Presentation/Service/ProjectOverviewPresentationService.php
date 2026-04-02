@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\ProjectManagement\Presentation\Service;
 
 use App\ProjectManagement\Domain\Dto\ProjectListFilterDto;
+use App\ProjectManagement\Domain\Dto\ProjectListItemDto;
+use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
 use App\ProjectManagement\Presentation\Dto\ProjectListItemViewDto;
 use App\ProjectManagement\Presentation\Dto\ProjectListViewDto;
@@ -14,7 +16,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
 {
     public function __construct(
         private ProjectManagementDomainServiceInterface $projectManagementDomainService,
-        private UrlGeneratorInterface $urlGenerator
+        private UrlGeneratorInterface                   $urlGenerator
     ) {
     }
 
@@ -28,13 +30,13 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
             new ProjectListFilterDto(
                 $searchQuery,
                 $categoryFilter,
-                $sortBy ?? 'updatedAt',
+                $sortBy        ?? 'updatedAt',
                 $sortDirection ?? 'DESC'
             )
         );
 
         $items = array_map(
-            fn ($item): ProjectListItemViewDto => new ProjectListItemViewDto(
+            fn (ProjectListItemDto $item): ProjectListItemViewDto => new ProjectListItemViewDto(
                 $item->uuid,
                 $item->title,
                 $item->categoryName,
@@ -46,7 +48,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
         );
 
         $categoryOptions = array_map(
-            static fn ($category): string => $category->getName(),
+            static fn (ProjectCategory $category): string => $category->getName(),
             $this->projectManagementDomainService->getAllProjectCategories()
         );
 

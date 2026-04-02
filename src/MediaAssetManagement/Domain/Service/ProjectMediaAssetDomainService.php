@@ -18,8 +18,8 @@ readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomain
 {
     public function __construct(
         private ProjectMediaAssetRepositoryInterface $projectMediaAssetRepository,
-        private ProjectMediaAssetStorageInterface $projectMediaAssetStorage,
-        private ProjectManagementFacadeInterface $projectManagementFacade
+        private ProjectMediaAssetStorageInterface    $projectMediaAssetStorage,
+        private ProjectManagementFacadeInterface     $projectManagementFacade
     ) {
     }
 
@@ -33,7 +33,7 @@ readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomain
             return $this->replaceProjectMediaAsset($projectUuid, $uploadedFile);
         }
 
-        $extension = $this->resolveExtension($uploadedFile);
+        $extension  = $this->resolveExtension($uploadedFile);
         $storedFile = $this->projectMediaAssetStorage->storeUploadedFile(
             $uploadedFile,
             $this->projectMediaAssetStorage->buildStorageFilename($projectUuid, $extension)
@@ -66,7 +66,7 @@ readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomain
             return $this->uploadProjectMediaAsset($projectUuid, $uploadedFile);
         }
 
-        $extension = $this->resolveExtension($uploadedFile);
+        $extension  = $this->resolveExtension($uploadedFile);
         $storedFile = $this->projectMediaAssetStorage->replaceStoredFile(
             $existingAsset->getStoredFilename(),
             $uploadedFile,

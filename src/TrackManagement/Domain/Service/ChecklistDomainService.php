@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\TrackManagement\Domain\Service;
 
 use App\TrackManagement\Domain\Dto\AddChecklistItemInputDto;
-use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\RemoveChecklistItemInputDto;
 use App\TrackManagement\Domain\Dto\RenameChecklistItemInputDto;
+use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\ToggleChecklistItemInputDto;
 use App\TrackManagement\Domain\Entity\ChecklistItem;
 use App\TrackManagement\Infrastructure\Repository\ChecklistItemRepositoryInterface;
@@ -102,7 +102,7 @@ readonly class ChecklistDomainService implements ChecklistDomainServiceInterface
 
         $reorderedItems = [];
         foreach ($input->orderedItemUuids as $position => $itemUuid) {
-            if (isset($reorderedItems[$itemUuid])) {
+            if (array_key_exists($itemUuid, $reorderedItems)) {
                 throw new ValueError('Checklist reorder must not contain duplicate item UUIDs.');
             }
 

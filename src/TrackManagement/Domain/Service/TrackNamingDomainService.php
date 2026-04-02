@@ -16,7 +16,7 @@ readonly class TrackNamingDomainService implements TrackNamingDomainServiceInter
             $input->trackNumber,
             $this->normalizeBeatName($input->beatName),
             $this->normalizeBpms($input->bpms),
-            $this->normalizeMusicalKey($input->musicalKey)
+            $this->normalizeMusicalKeys($input->musicalKeys)
         );
     }
 
@@ -34,11 +34,26 @@ readonly class TrackNamingDomainService implements TrackNamingDomainServiceInter
         return $normalized === '' ? 'UntitledBeat' : $normalized;
     }
 
-    public function normalizeMusicalKey(string $musicalKey): string
+    /**
+     * @param list<string> $musicalKeys
+     */
+    public function normalizeMusicalKeys(array $musicalKeys): string
     {
-        $canonical = MusicalKeyCatalog::canonicalize($musicalKey);
+        $normalizedMusicalKeys = array_values(
+            array_filter(
+                array_map(
+                    static fn (string $musicalKey): ?string => MusicalKeyCatalog::canonicalize($musicalKey),
+                    $musicalKeys
+                ),
+                static fn (?string $musicalKey): bool => $musicalKey !== null
+            )
+        );
 
-        return $canonical ?? 'UnknownKey';
+        if ($normalizedMusicalKeys === []) {
+            return 'UnknownKey';
+        }
+
+        return implode('_', $normalizedMusicalKeys);
     }
 
     public function normalizeBpms(array $bpms): string

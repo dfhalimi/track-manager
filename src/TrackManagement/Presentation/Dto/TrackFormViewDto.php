@@ -7,7 +7,8 @@ namespace App\TrackManagement\Presentation\Dto;
 readonly class TrackFormViewDto
 {
     /**
-     * @param list<int> $bpms
+     * @param list<int>    $bpms
+     * @param list<string> $musicalKeys
      * @param list<string> $musicalKeyOptions
      */
     public function __construct(
@@ -17,7 +18,7 @@ readonly class TrackFormViewDto
         public string  $title,
         public ?string $publishingName,
         public array   $bpms,
-        public string  $musicalKey,
+        public array   $musicalKeys,
         public array   $musicalKeyOptions,
         public ?string $notes,
         public ?string $isrc,

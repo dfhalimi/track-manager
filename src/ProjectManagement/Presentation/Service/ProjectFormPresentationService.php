@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Service;
 
+use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
 use App\ProjectManagement\Presentation\Dto\ProjectFormViewDto;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -12,7 +13,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
 {
     public function __construct(
         private ProjectManagementDomainServiceInterface $projectManagementDomainService,
-        private UrlGeneratorInterface $urlGenerator
+        private UrlGeneratorInterface                   $urlGenerator
     ) {
     }
 
@@ -33,11 +34,11 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
     }
 
     public function buildEditFormViewDto(
-        string $projectUuid,
+        string  $projectUuid,
         ?string $title = null,
         ?string $categoryName = null
     ): ProjectFormViewDto {
-        $project = $this->projectManagementDomainService->getProjectByUuid($projectUuid);
+        $project  = $this->projectManagementDomainService->getProjectByUuid($projectUuid);
         $category = $this->projectManagementDomainService->getProjectCategoryByUuid($project->getCategoryUuid());
 
         return new ProjectFormViewDto(
@@ -58,7 +59,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
     private function buildCategoryOptions(): array
     {
         return array_map(
-            static fn ($category): string => $category->getName(),
+            static fn (ProjectCategory $category): string => $category->getName(),
             $this->projectManagementDomainService->getAllProjectCategories()
         );
     }

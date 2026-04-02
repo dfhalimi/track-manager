@@ -14,7 +14,10 @@ interface TrackNamingDomainServiceInterface
 
     public function normalizeBeatName(string $beatName): string;
 
-    public function normalizeMusicalKey(string $musicalKey): string;
+    /**
+     * @param list<string> $musicalKeys
+     */
+    public function normalizeMusicalKeys(array $musicalKeys): string;
 
     /**
      * @param list<int> $bpms

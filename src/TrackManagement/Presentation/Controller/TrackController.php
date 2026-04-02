@@ -56,7 +56,7 @@ final class TrackController extends AbstractController
                         $request->request->getString('title'),
                         $this->normalizeNullableString($request->request->getString('publishing_name', '')),
                         $this->normalizeBpms($request->request->all('bpms')),
-                        $request->request->getString('musical_key'),
+                        $this->normalizeMusicalKeys($request->request->all('musical_keys')),
                         $this->normalizeNullableString($request->request->getString('notes', '')),
                         $this->normalizeNullableString($request->request->getString('isrc', ''))
                     )
@@ -75,7 +75,7 @@ final class TrackController extends AbstractController
             $request->request->getString('title', ''),
             $this->normalizeNullableString($request->request->getString('publishing_name', '')),
             $request->request->has('bpms') ? $this->normalizeBpms($request->request->all('bpms')) : null,
-            $request->request->getString('musical_key', ''),
+            $request->request->has('musical_keys') ? $this->normalizeMusicalKeys($request->request->all('musical_keys')) : null,
             $this->normalizeNullableString($request->request->getString('notes', '')),
             $this->normalizeNullableString($request->request->getString('isrc', ''))
         );
@@ -105,7 +105,7 @@ final class TrackController extends AbstractController
                         $request->request->getString('title'),
                         $this->normalizeNullableString($request->request->getString('publishing_name', '')),
                         $this->normalizeBpms($request->request->all('bpms')),
-                        $request->request->getString('musical_key'),
+                        $this->normalizeMusicalKeys($request->request->all('musical_keys')),
                         $this->normalizeNullableString($request->request->getString('notes', '')),
                         $this->normalizeNullableString($request->request->getString('isrc', '')),
                         $request->request->getString('replace_title_with_suggestion', '0') === '1'
@@ -127,7 +127,7 @@ final class TrackController extends AbstractController
                 $request->request->getString('title', '') ?: null,
                 $this->normalizeNullableString($request->request->getString('publishing_name', '')),
                 $request->request->has('bpms') ? $this->normalizeBpms($request->request->all('bpms')) : null,
-                $request->request->getString('musical_key', '') ?: null,
+                $request->request->has('musical_keys') ? $this->normalizeMusicalKeys($request->request->all('musical_keys')) : null,
                 $this->normalizeNullableString($request->request->getString('notes', '')),
                 $this->normalizeNullableString($request->request->getString('isrc', ''))
             ),
@@ -159,8 +159,6 @@ final class TrackController extends AbstractController
     }
 
     /**
-     * @param mixed $values
-     *
      * @return list<int>
      */
     private function normalizeBpms(mixed $values): array
@@ -184,5 +182,31 @@ final class TrackController extends AbstractController
         }
 
         return $bpms;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function normalizeMusicalKeys(mixed $values): array
+    {
+        if (!is_array($values)) {
+            return [];
+        }
+
+        $musicalKeys = [];
+        foreach ($values as $value) {
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            $trimmed = trim((string) $value);
+            if ($trimmed === '') {
+                continue;
+            }
+
+            $musicalKeys[] = $trimmed;
+        }
+
+        return $musicalKeys;
     }
 }

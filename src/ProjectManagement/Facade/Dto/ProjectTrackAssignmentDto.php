@@ -8,7 +8,7 @@ readonly class ProjectTrackAssignmentDto
 {
     public function __construct(
         public string $trackUuid,
-        public int $position
+        public int    $position
     ) {
     }
 }

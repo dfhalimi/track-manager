@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 readonly class MediaAssetManagementFacade implements MediaAssetManagementFacadeInterface
 {
     public function __construct(
-        private ProjectMediaAssetDomainServiceInterface $projectMediaAssetDomainService,
+        private ProjectMediaAssetDomainServiceInterface       $projectMediaAssetDomainService,
         private ProjectMediaAssetExportDomainServiceInterface $projectMediaAssetExportDomainService
     ) {
     }

@@ -25,7 +25,7 @@
             data-track-title-edit-mode-value="{{ view.isEditMode ? 'true' : 'false' }}"
             data-track-title-original-beat-name-value="{{ view.beatName }}"
             data-track-title-original-bpms-value="{{ view.bpms|json_encode|e('html_attr') }}"
-            data-track-title-original-musical-key-value="{{ view.musicalKey }}"
+            data-track-title-original-musical-keys-value="{{ view.musicalKeys|json_encode|e('html_attr') }}"
             data-track-title-suggested-title-value="{{ view.suggestedTitle }}"
         >
             <input type="hidden" name="replace_title_with_suggestion" value="0" data-track-title-target="replaceFlag">
@@ -46,13 +46,25 @@
                     <p class="mt-1 text-xs text-slate-500">Optionaler finaler Songname für das spätere Release.</p>
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Musical Key</label>
-                    <input type="text" name="musical_key" value="{{ view.musicalKey }}" list="track-musical-key-options" autocomplete="off" class="w-full rounded border border-slate-300 px-3 py-2 text-sm" data-track-title-target="musicalKey" data-action="input->track-title#updateSuggestion">
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Musical Keys</label>
+                    <div class="space-y-2" data-track-title-target="musicalKeyList">
+                        {% for musicalKey in view.musicalKeys is empty ? [''] : view.musicalKeys %}
+                            <input type="text" name="musical_keys[]" value="{{ musicalKey }}" list="track-musical-key-options" autocomplete="off" class="w-full rounded border border-slate-300 px-3 py-2 text-sm" data-action="input->track-title#updateSuggestion">
+                        {% endfor %}
+                    </div>
+                    <template data-track-title-target="musicalKeyTemplate">
+                        <input type="text" name="musical_keys[]" value="" list="track-musical-key-options" autocomplete="off" class="w-full rounded border border-slate-300 px-3 py-2 text-sm" data-action="input->track-title#updateSuggestion">
+                    </template>
                     <datalist id="track-musical-key-options">
                         {% for musicalKeyOption in view.musicalKeyOptions %}
                             <option value="{{ musicalKeyOption }}"></option>
                         {% endfor %}
                     </datalist>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900" data-action="track-title#addMusicalKey">+ Key hinzufügen</button>
+                        <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900" data-track-title-target="removeMusicalKeyButton" data-action="track-title#removeLastMusicalKey">Letzten Key entfernen</button>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500">Mehrere Keys werden in derselben Reihenfolge in den Title übernommen.</p>
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">ISRC</label>

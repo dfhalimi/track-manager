@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Facade;
 
-use App\TrackManagement\Domain\Entity\ChecklistItem;
-use App\TrackManagement\Domain\Entity\Track;
 use App\TrackManagement\Domain\Dto\TrackListFilterDto;
 use App\TrackManagement\Domain\Dto\TrackListItemDto;
+use App\TrackManagement\Domain\Entity\ChecklistItem;
+use App\TrackManagement\Domain\Entity\Track;
 use App\TrackManagement\Domain\Service\ChecklistDomainServiceInterface;
 use App\TrackManagement\Domain\Service\ProgressCalculatorInterface;
 use App\TrackManagement\Domain\Service\TrackManagementDomainServiceInterface;
@@ -52,7 +52,7 @@ readonly class TrackManagementFacade implements TrackManagementFacadeInterface
             $track->getBeatName(),
             $track->getTitle(),
             $track->getBpms(),
-            $track->getMusicalKey()
+            $track->getMusicalKeys()
         );
     }
 
@@ -65,7 +65,7 @@ readonly class TrackManagementFacade implements TrackManagementFacadeInterface
             $track->getTrackNumber(),
             $track->getBeatName(),
             $track->getBpms(),
-            $track->getMusicalKey(),
+            $track->getMusicalKeys(),
             $track->getTitle()
         );
     }
@@ -128,7 +128,7 @@ readonly class TrackManagementFacade implements TrackManagementFacadeInterface
             $track->getTitle(),
             $track->getPublishingName(),
             $track->getBpms(),
-            $track->getMusicalKey(),
+            $track->getMusicalKeys(),
             $track->getNotes(),
             $track->getIsrc(),
             $track->getCreatedAt(),

@@ -13,12 +13,12 @@ use ValueError;
 
 readonly class ProjectMediaAssetExportDomainService implements ProjectMediaAssetExportDomainServiceInterface
 {
-    private const SPOTIFY_EXPORT_SIZE = 3000;
+    private const int SPOTIFY_EXPORT_SIZE = 3000;
 
     public function __construct(
         private ProjectMediaAssetRepositoryInterface $projectMediaAssetRepository,
-        private ProjectMediaAssetStorageInterface $projectMediaAssetStorage,
-        private ProjectManagementFacadeInterface $projectManagementFacade
+        private ProjectMediaAssetStorageInterface    $projectMediaAssetStorage,
+        private ProjectManagementFacadeInterface     $projectManagementFacade
     ) {
     }
 
@@ -29,14 +29,14 @@ readonly class ProjectMediaAssetExportDomainService implements ProjectMediaAsset
             throw new ValueError('Only JPG and PNG exports are supported for project images.');
         }
 
-        $project = $this->projectManagementFacade->getProjectByUuid($projectUuid);
+        $project    = $this->projectManagementFacade->getProjectByUuid($projectUuid);
         $mediaAsset = $this->projectMediaAssetRepository->findCurrentByProjectUuid($projectUuid);
 
         if ($mediaAsset === null) {
             throw new ValueError('Project has no image to export.');
         }
 
-        $sourcePath = $this->projectMediaAssetStorage->resolveStoragePath($mediaAsset->getStoredFilename());
+        $sourcePath        = $this->projectMediaAssetStorage->resolveStoragePath($mediaAsset->getStoredFilename());
         $temporaryFilePath = sys_get_temp_dir() . '/' . uniqid('project-media-export-', true) . '.' . $targetFormat;
 
         $sourceImage = $this->createImageResource($sourcePath, $mediaAsset->getExtension());
@@ -102,8 +102,8 @@ readonly class ProjectMediaAssetExportDomainService implements ProjectMediaAsset
         }
 
         $cropSize = min($sourceWidth, $sourceHeight);
-        $sourceX = (int) floor(($sourceWidth - $cropSize) / 2);
-        $sourceY = (int) floor(($sourceHeight - $cropSize) / 2);
+        $sourceX  = (int) floor(($sourceWidth - $cropSize) / 2);
+        $sourceY  = (int) floor(($sourceHeight - $cropSize) / 2);
 
         imagecopyresampled(
             $destinationImage,

@@ -46,7 +46,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
                 $item->title,
                 $item->publishingName,
                 $this->formatBpms($item->bpms),
-                $item->musicalKey,
+                $this->formatMusicalKeys($item->musicalKeys),
                 $status->getLabel(),
                 $status->value,
                 $item->progress,
@@ -73,5 +73,13 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
     private function formatBpms(array $bpms): string
     {
         return implode(', ', array_map(static fn (int $bpm): string => (string) $bpm, $bpms));
+    }
+
+    /**
+     * @param list<string> $musicalKeys
+     */
+    private function formatMusicalKeys(array $musicalKeys): string
+    {
+        return implode(', ', $musicalKeys);
     }
 }

@@ -17,20 +17,20 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 readonly class TrackDetailPresentationService implements TrackDetailPresentationServiceInterface
 {
     public function __construct(
-        private TrackManagementFacadeInterface $trackManagementFacade,
+        private TrackManagementFacadeInterface   $trackManagementFacade,
         private ProjectManagementFacadeInterface $projectManagementFacade,
-        private FileImportFacadeInterface      $fileImportFacade,
-        private UrlGeneratorInterface          $urlGenerator
+        private FileImportFacadeInterface        $fileImportFacade,
+        private UrlGeneratorInterface            $urlGenerator
     ) {
     }
 
     public function buildTrackDetailViewDto(string $trackUuid): TrackDetailViewDto
     {
-        $track     = $this->trackManagementFacade->getTrackByUuid($trackUuid);
-        $checklist = $this->trackManagementFacade->getChecklistByTrackUuid($trackUuid);
+        $track              = $this->trackManagementFacade->getTrackByUuid($trackUuid);
+        $checklist          = $this->trackManagementFacade->getChecklistByTrackUuid($trackUuid);
         $projectMemberships = $this->projectManagementFacade->getProjectsByTrackUuid($trackUuid);
-        $trackFile = $this->fileImportFacade->getCurrentTrackFileByTrackUuid($trackUuid);
-        $status    = TrackStatus::from($checklist->status);
+        $trackFile          = $this->fileImportFacade->getCurrentTrackFileByTrackUuid($trackUuid);
+        $status             = TrackStatus::from($checklist->status);
 
         $checklistItems = [];
         foreach ($checklist->items as $item) {
@@ -71,7 +71,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
             $track->title,
             $track->publishingName,
             $this->formatBpms($track->bpms),
-            $track->musicalKey,
+            $this->formatMusicalKeys($track->musicalKeys),
             $track->notes,
             $track->isrc,
             $checklist->progress,
@@ -103,5 +103,13 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
     private function formatBpms(array $bpms): string
     {
         return implode(', ', array_map(static fn (int $bpm): string => (string) $bpm, $bpms));
+    }
+
+    /**
+     * @param list<string> $musicalKeys
+     */
+    private function formatMusicalKeys(array $musicalKeys): string
+    {
+        return implode(', ', $musicalKeys);
     }
 }

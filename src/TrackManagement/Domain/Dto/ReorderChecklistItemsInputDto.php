@@ -11,7 +11,7 @@ readonly class ReorderChecklistItemsInputDto
      */
     public function __construct(
         public string $trackUuid,
-        public array $orderedItemUuids
+        public array  $orderedItemUuids
     ) {
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Facade;
 
-use App\ProjectManagement\Domain\Entity\ProjectTrackAssignment;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
+use App\ProjectManagement\Domain\Entity\ProjectTrackAssignment;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
 use App\ProjectManagement\Facade\Dto\ProjectCategoryDto;
 use App\ProjectManagement\Facade\Dto\ProjectDto;
@@ -22,7 +22,7 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
 
     public function getProjectByUuid(string $projectUuid): ProjectDto
     {
-        $project = $this->projectManagementDomainService->getProjectByUuid($projectUuid);
+        $project  = $this->projectManagementDomainService->getProjectByUuid($projectUuid);
         $category = $this->projectManagementDomainService->getProjectCategoryByUuid($project->getCategoryUuid());
 
         return new ProjectDto(
@@ -73,7 +73,7 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
         $memberships = [];
 
         foreach ($this->projectManagementDomainService->getTrackAssignmentsByTrackUuid($trackUuid) as $assignment) {
-            $project = $this->projectManagementDomainService->getProjectByUuid($assignment->getProjectUuid());
+            $project  = $this->projectManagementDomainService->getProjectByUuid($assignment->getProjectUuid());
             $category = $this->projectManagementDomainService->getProjectCategoryByUuid($project->getCategoryUuid());
 
             $memberships[] = new TrackProjectMembershipDto(
