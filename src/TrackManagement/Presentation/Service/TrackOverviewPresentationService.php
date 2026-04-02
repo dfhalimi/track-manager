@@ -9,6 +9,7 @@ use App\FileImport\Facade\FileImportFacadeInterface;
 use App\TrackManagement\Domain\Dto\TrackListFilterDto;
 use App\TrackManagement\Domain\Enum\TrackStatus;
 use App\TrackManagement\Domain\Service\TrackManagementDomainServiceInterface;
+use App\TrackManagement\Presentation\Dto\TrackFileViewDto;
 use App\TrackManagement\Presentation\Dto\TrackListItemViewDto;
 use App\TrackManagement\Presentation\Dto\TrackListViewDto;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -40,8 +41,9 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
 
         $items = [];
         foreach ($result->items as $item) {
-            $status  = TrackStatus::from($item->status);
-            $items[] = new TrackListItemViewDto(
+            $status    = TrackStatus::from($item->status);
+            $trackFile = $this->fileImportFacade->getCurrentTrackFileByTrackUuid($item->uuid);
+            $items[]   = new TrackListItemViewDto(
                 $item->uuid,
                 $item->trackNumber,
                 $item->beatName,
@@ -52,7 +54,18 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
                 $status->getLabel(),
                 $status->value,
                 $item->progress,
-                $this->fileImportFacade->getCurrentTrackFileByTrackUuid($item->uuid) !== null,
+                $trackFile !== null,
+                $this->urlGenerator->generate('file_import.presentation.upload', ['trackUuid' => $item->uuid]),
+                $trackFile === null ? null : new TrackFileViewDto(
+                    $trackFile->originalFilename,
+                    $trackFile->mimeType,
+                    $trackFile->uploadedAt->format('Y-m-d H:i'),
+                    $this->urlGenerator->generate('file_import.presentation.play', ['trackUuid' => $item->uuid]),
+                    $this->urlGenerator->generate('file_import.presentation.upload', ['trackUuid' => $item->uuid]),
+                    $this->urlGenerator->generate('file_import.presentation.replace', ['trackUuid' => $item->uuid]),
+                    $this->urlGenerator->generate('file_export.presentation.export', ['trackUuid' => $item->uuid, 'format' => 'mp3']),
+                    $this->urlGenerator->generate('file_export.presentation.export', ['trackUuid' => $item->uuid, 'format' => 'wav'])
+                ),
                 $this->urlGenerator->generate('track_management.presentation.show', ['trackUuid' => $item->uuid]),
                 $this->urlGenerator->generate('track_management.presentation.edit', ['trackUuid' => $item->uuid]),
                 $this->urlGenerator->generate('track_management.presentation.delete', ['trackUuid' => $item->uuid])
@@ -74,6 +87,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
             $result->currentPage < $result->totalPages ? $this->buildIndexUrl($filter, $result->currentPage + 1) : null,
             $this->buildPageLinks($filter, $result->currentPage, $result->totalPages),
             $this->urlGenerator->generate('track_management.presentation.index'),
+            $this->buildIndexUrl($filter, $result->currentPage),
             $this->urlGenerator->generate('track_management.presentation.list'),
             $this->urlGenerator->generate('track_management.presentation.suggestions'),
             $this->urlGenerator->generate('track_management.presentation.create')

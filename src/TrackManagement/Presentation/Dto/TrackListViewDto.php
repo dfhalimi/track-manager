@@ -28,6 +28,7 @@ readonly class TrackListViewDto
         public ?string $nextPageUrl,
         public array   $pageLinks,
         public string  $indexUrl,
+        public string  $currentUrl,
         public string  $listUrl,
         public string  $suggestionsUrl,
         public string  $createUrl
