@@ -20,6 +20,24 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
 {
     private const int MAX_AUDIO_FILE_SIZE_BYTES = 250 * 1024 * 1024;
 
+    /**
+     * @var array<string, string>
+     */
+    private const array AUDIO_EXTENSION_ALIASES = [
+        'mp3'            => 'mp3',
+        'mpeg'           => 'mp3',
+        'mpga'           => 'mp3',
+        'audio/mpeg'     => 'mp3',
+        'audio/mp3'      => 'mp3',
+        'audio/mpa'      => 'mp3',
+        'wav'            => 'wav',
+        'wave'           => 'wav',
+        'audio/wav'      => 'wav',
+        'audio/wave'     => 'wav',
+        'audio/x-wav'    => 'wav',
+        'audio/vnd.wave' => 'wav',
+    ];
+
     public function __construct(
         private TrackFileRepositoryInterface   $trackFileRepository,
         private TrackFileStorageInterface      $trackFileStorage,
@@ -30,7 +48,7 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
     public function uploadTrackFile(UploadTrackFileInputDto $input): TrackFileDto
     {
         $this->ensureTrackExists($input->trackUuid);
-        $this->assertSupportedAudioFile($input->uploadedFile);
+        $extension = $this->resolveSupportedAudioExtension($input->uploadedFile);
 
         $existingTrackFile = $this->trackFileRepository->findCurrentByTrackUuid($input->trackUuid);
 
@@ -40,7 +58,6 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
             );
         }
 
-        $extension  = $this->resolveExtension($input->uploadedFile);
         $storedFile = $this->trackFileStorage->storeUploadedFile(
             $input->uploadedFile,
             $this->trackFileStorage->buildStorageFilename($input->trackUuid, $extension)
@@ -64,14 +81,13 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
     public function replaceTrackFile(ReplaceTrackFileInputDto $input): TrackFileDto
     {
         $this->ensureTrackExists($input->trackUuid);
-        $this->assertSupportedAudioFile($input->uploadedFile);
+        $extension = $this->resolveSupportedAudioExtension($input->uploadedFile);
 
         $existingTrackFile = $this->trackFileRepository->findCurrentByTrackUuid($input->trackUuid);
         if ($existingTrackFile === null) {
             return $this->uploadTrackFile(new UploadTrackFileInputDto($input->trackUuid, $input->uploadedFile));
         }
 
-        $extension  = $this->resolveExtension($input->uploadedFile);
         $storedFile = $this->trackFileStorage->replaceStoredFile(
             $existingTrackFile->getStoredFilename(),
             $input->uploadedFile,
@@ -99,6 +115,11 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
 
     public function assertSupportedAudioFile(UploadedFile $file): void
     {
+        $this->resolveSupportedAudioExtension($file);
+    }
+
+    private function resolveSupportedAudioExtension(UploadedFile $file): string
+    {
         $this->assertAudioFileSize($file);
 
         $extension = $this->resolveExtension($file);
@@ -106,6 +127,8 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
         if (!in_array($extension, ['mp3', 'wav'], true)) {
             throw new ValueError('Only MP3 and WAV files are supported.');
         }
+
+        return $extension;
     }
 
     public function deleteCurrentTrackFile(string $trackUuid): void
@@ -144,13 +167,53 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
 
     private function resolveExtension(UploadedFile $file): string
     {
-        $extension = mb_strtolower((string) ($file->guessExtension() ?: $file->getClientOriginalExtension()));
+        $candidates = [
+            $file->guessExtension(),
+            $file->getClientOriginalExtension(),
+            $file->getMimeType(),
+            $file->getClientMimeType(),
+        ];
+        $fallbackExtension = null;
 
-        if ($extension === '') {
-            throw new ValueError('Uploaded file extension could not be detected.');
+        foreach ($candidates as $candidate) {
+            $normalizedExtension = $this->normalizeAudioExtension($candidate);
+            if ($normalizedExtension !== null) {
+                return $normalizedExtension;
+            }
+
+            $fallbackExtension ??= $this->normalizeExtensionCandidate($candidate);
         }
 
-        return $extension;
+        if ($fallbackExtension !== null) {
+            return $fallbackExtension;
+        }
+
+        throw new ValueError('Uploaded file extension could not be detected.');
+    }
+
+    private function normalizeAudioExtension(?string $candidate): ?string
+    {
+        if ($candidate === null) {
+            return null;
+        }
+
+        $normalizedCandidate = mb_strtolower(trim($candidate));
+        if ($normalizedCandidate === '') {
+            return null;
+        }
+
+        return self::AUDIO_EXTENSION_ALIASES[$normalizedCandidate] ?? null;
+    }
+
+    private function normalizeExtensionCandidate(?string $candidate): ?string
+    {
+        if ($candidate === null) {
+            return null;
+        }
+
+        $normalizedCandidate = mb_strtolower(trim($candidate));
+
+        return $normalizedCandidate === '' ? null : $normalizedCandidate;
     }
 
     private function mapTrackFileToDto(TrackFile $trackFile): TrackFileDto

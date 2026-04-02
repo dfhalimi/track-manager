@@ -17,6 +17,28 @@ use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 describe('TrackFileImportDomainService', function (): void {
+    it('accepts mp3 uploads when Symfony reports an alias extension', function (): void {
+        $storage = new RecordingTrackFileStorage();
+        $service = new TrackFileImportDomainService(
+            new InMemoryTrackFileRepository(),
+            $storage,
+            new ExistingTrackManagementFacadeStub(['track-1'])
+        );
+
+        $uploadedFile = createUploadedAudioFile(
+            'mp3',
+            1024,
+            'mpga',
+            'audio/mpeg',
+            'audio/mpeg'
+        );
+
+        $trackFile = $service->uploadTrackFile(new UploadTrackFileInputDto('track-1', $uploadedFile));
+
+        expect($trackFile->extension)->toBe('mp3');
+        expect($storage->lastStorageFilename)->toBe('track-1.mp3');
+    });
+
     it('rejects audio files above the application upload limit', function (): void {
         $service = new TrackFileImportDomainService(
             new InMemoryTrackFileRepository(),
@@ -30,10 +52,31 @@ describe('TrackFileImportDomainService', function (): void {
 
         expect($action)->toThrow(ValueError::class, 'Die Datei ist zu groß. Erlaubt sind maximal 250 MB.');
     });
+    it('rejects unsupported audio files', function (): void {
+        $service = new TrackFileImportDomainService(
+            new InMemoryTrackFileRepository(),
+            new RecordingTrackFileStorage(),
+            new ExistingTrackManagementFacadeStub(['track-1'])
+        );
+
+        $action = static fn () => $service->uploadTrackFile(
+            new UploadTrackFileInputDto(
+                'track-1',
+                createUploadedAudioFile('ogg', 1024, 'ogg', 'audio/ogg', 'audio/ogg')
+            )
+        );
+
+        expect($action)->toThrow(ValueError::class, 'Only MP3 and WAV files are supported.');
+    });
 });
 
-function createUploadedAudioFile(string $extension, int $sizeBytes): UploadedFile
-{
+function createUploadedAudioFile(
+    string  $extension,
+    int     $sizeBytes,
+    ?string $guessedExtension = null,
+    ?string $mimeType = null,
+    ?string $clientMimeType = null
+): UploadedFile {
     $path = tempnam(sys_get_temp_dir(), 'track-file-test-');
     if ($path === false) {
         throw new RuntimeException('Temporary file could not be created.');
@@ -41,18 +84,36 @@ function createUploadedAudioFile(string $extension, int $sizeBytes): UploadedFil
 
     file_put_contents($path, 'audio');
 
-    return new class($path, $extension, $sizeBytes) extends UploadedFile {
+    return new class($path, $extension, $sizeBytes, $guessedExtension, $mimeType, $clientMimeType) extends UploadedFile {
         public function __construct(
-            string               $path,
-            string               $extension,
-            private readonly int $sizeBytes
+            string                   $path,
+            string                   $extension,
+            private readonly int     $sizeBytes,
+            private readonly ?string $guessedExtension,
+            private readonly ?string $mimeType,
+            private readonly ?string $clientMimeType
         ) {
-            parent::__construct($path, 'demo.' . $extension, 'audio/' . $extension, null, true);
+            parent::__construct($path, 'demo.' . $extension, $clientMimeType ?? 'audio/' . $extension, null, true);
         }
 
         public function getSize(): int
         {
             return $this->sizeBytes;
+        }
+
+        public function guessExtension(): ?string
+        {
+            return $this->guessedExtension;
+        }
+
+        public function getMimeType(): ?string
+        {
+            return $this->mimeType;
+        }
+
+        public function getClientMimeType(): string
+        {
+            return $this->clientMimeType ?? parent::getClientMimeType();
         }
     };
 }
@@ -75,14 +136,24 @@ final class InMemoryTrackFileRepository implements TrackFileRepositoryInterface
 
 final class RecordingTrackFileStorage implements TrackFileStorageInterface
 {
+    public ?string $lastStorageFilename = null;
+
     public function storeUploadedFile(UploadedFile $file, string $storageFilename): StoredFileDto
     {
-        throw new BadMethodCallException('Storage should not be called for oversized files.');
+        $this->lastStorageFilename = $storageFilename;
+
+        return new StoredFileDto(
+            $storageFilename,
+            '/tmp/' . $storageFilename,
+            (string) pathinfo($storageFilename, PATHINFO_EXTENSION),
+            (string) ($file->getClientMimeType() ?: 'application/octet-stream'),
+            (int) $file->getSize()
+        );
     }
 
     public function replaceStoredFile(string $oldFilename, UploadedFile $newFile, string $newStorageFilename): StoredFileDto
     {
-        throw new BadMethodCallException('Storage should not be called for oversized files.');
+        return $this->storeUploadedFile($newFile, $newStorageFilename);
     }
 
     public function deleteStoredFile(string $storedFilename): void
