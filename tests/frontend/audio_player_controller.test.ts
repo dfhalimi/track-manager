@@ -103,7 +103,7 @@ describe("audio_player_controller", () => {
         const volumePanel = element.querySelector<HTMLElement>('[data-audio-player-target="volumePanel"]');
         const volumeSlider = element.querySelector<HTMLInputElement>('[data-audio-player-target="volumeSlider"]');
 
-        if (volumeWrapper === null || volumePanel === null || volumeSlider === null) {
+        if (volumeWrapper == null || volumePanel === null || volumeSlider === null) {
             throw new Error("Volume controls not found.");
         }
 
