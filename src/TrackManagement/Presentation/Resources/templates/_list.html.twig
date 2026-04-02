@@ -80,8 +80,32 @@
             <thead class="bg-slate-50">
                 <tr>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">ID</th>
-                    <th class="px-3 py-3 text-left font-medium text-slate-600">Beat Name</th>
-                    <th class="px-3 py-3 text-left font-medium text-slate-600">Publishing Name</th>
+                    <th class="px-3 py-3 text-left font-medium text-slate-600">
+                        <div class="relative inline-flex items-center gap-1 group">
+                            <span>Beat Name</span>
+                            <button type="button" aria-label="Info zu Beat Name" class="relative top-px inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-400 transition hover:text-slate-700 focus:text-slate-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                                    <path fill-rule="evenodd" d="M18 10A8 8 0 1 1 2 10a8 8 0 0 1 16 0ZM9.25 8a.75.75 0 0 1 1.5 0v.25a.75.75 0 0 1-1.5 0V8Zm0 3a.75.75 0 0 1 .75-.75h.007a.75.75 0 0 1 .743.648l.25 2a.75.75 0 0 1-1.488.204l-.16-1.28H10a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div class="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden w-56 rounded border border-slate-200 bg-white p-3 text-xs font-normal normal-case leading-relaxed text-slate-700 shadow-lg group-hover:block group-focus-within:block">
+                                Interner Arbeitsname des Beats zur Organisation im Track Manager.
+                            </div>
+                        </div>
+                    </th>
+                    <th class="px-3 py-3 text-left font-medium text-slate-600">
+                        <div class="relative inline-flex items-center gap-1 group">
+                            <span>Publishing Name</span>
+                            <button type="button" aria-label="Info zu Publishing Name" class="relative top-px inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-400 transition hover:text-slate-700 focus:text-slate-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                                    <path fill-rule="evenodd" d="M18 10A8 8 0 1 1 2 10a8 8 0 0 1 16 0ZM9.25 8a.75.75 0 0 1 1.5 0v.25a.75.75 0 0 1-1.5 0V8Zm0 3a.75.75 0 0 1 .75-.75h.007a.75.75 0 0 1 .743.648l.25 2a.75.75 0 0 1-1.488.204l-.16-1.28H10a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div class="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden w-56 rounded border border-slate-200 bg-white p-3 text-xs font-normal normal-case leading-relaxed text-slate-700 shadow-lg group-hover:block group-focus-within:block">
+                                Geplanter finaler Songname für Veröffentlichung und Release.
+                            </div>
+                        </div>
+                    </th>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">BPM</th>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">Key</th>
                     <th class="px-3 py-3 text-left font-medium text-slate-600">Status</th>

@@ -41,6 +41,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project = new Project();
         $project->setUuid(Uuid::v7()->toRfc4122());
         $project->setTitle($this->normalizeTitle($input->title));
+        $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
         $project->setCategoryUuid($this->resolveCategory($input->categoryName)->getUuid());
         $project->setCreatedAt($now);
         $project->setUpdatedAt($now);
@@ -56,6 +57,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project = $this->projectRepository->getByUuid($input->projectUuid);
 
         $project->setTitle($this->normalizeTitle($input->title));
+        $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
         $project->setCategoryUuid($this->resolveCategory($input->categoryName)->getUuid());
         $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
 
@@ -313,6 +315,11 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         if (trim($project->getCategoryUuid()) === '') {
             throw new ValueError('Project category must not be empty.');
         }
+
+        $existingProject = $this->projectRepository->findByNormalizedTitle($project->getNormalizedTitle());
+        if ($existingProject instanceof Project && $existingProject->getUuid() !== $project->getUuid()) {
+            throw new ValueError('Es existiert bereits ein Projekt mit diesem Namen.');
+        }
     }
 
     private function ensureTrackExists(string $trackUuid): void
@@ -325,6 +332,11 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
     private function normalizeTitle(string $title): string
     {
         return preg_replace('/\s+/', ' ', trim($title)) ?? trim($title);
+    }
+
+    private function normalizeStorageTitle(string $title): string
+    {
+        return mb_strtolower($this->normalizeTitle($title));
     }
 
     private function resequenceAssignments(string $projectUuid): void

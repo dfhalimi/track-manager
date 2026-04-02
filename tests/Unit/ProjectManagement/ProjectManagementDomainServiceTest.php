@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ReorderProjectTracksInputDto;
+use App\ProjectManagement\Domain\Dto\UpdateProjectInputDto;
 use App\ProjectManagement\Domain\Entity\Project;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Entity\ProjectTrackAssignment;
@@ -89,6 +90,35 @@ describe('ProjectManagementDomainService', function (): void {
 
         expect($action)->toThrow(ValueError::class, 'Track is already assigned to this project.');
     });
+
+    it('rejects creating a project with a duplicate title', function (): void {
+        $service = new ProjectManagementDomainService(
+            new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1')]),
+            new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
+            new InMemoryProjectTrackAssignmentRepository(),
+            new TrackManagementFacadeStub([])
+        );
+
+        $action = static fn () => $service->createProject(new CreateProjectInputDto('  spring   tape ', 'single'));
+
+        expect($action)->toThrow(ValueError::class, 'Es existiert bereits ein Projekt mit diesem Namen.');
+    });
+
+    it('rejects renaming a project to an existing title', function (): void {
+        $service = new ProjectManagementDomainService(
+            new InMemoryProjectRepository([
+                createProject('project-1', 'Spring Tape', 'category-1'),
+                createProject('project-2', 'Summer Tape', 'category-1'),
+            ]),
+            new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
+            new InMemoryProjectTrackAssignmentRepository(),
+            new TrackManagementFacadeStub([])
+        );
+
+        $action = static fn () => $service->updateProject(new UpdateProjectInputDto('project-2', 'spring tape', 'single'));
+
+        expect($action)->toThrow(ValueError::class, 'Es existiert bereits ein Projekt mit diesem Namen.');
+    });
 });
 
 function createProjectCategory(string $uuid, string $name, string $normalizedName): ProjectCategory
@@ -108,6 +138,7 @@ function createProject(string $uuid, string $title, string $categoryUuid): Proje
     $project = new Project();
     $project->setUuid($uuid);
     $project->setTitle($title);
+    $project->setNormalizedTitle(mb_strtolower(trim(preg_replace('/\s+/', ' ', $title) ?? $title)));
     $project->setCategoryUuid($categoryUuid);
     $project->setCreatedAt(DateAndTimeService::getDateTimeImmutable());
     $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
@@ -231,6 +262,21 @@ final class InMemoryProjectRepository implements ProjectRepositoryInterface
     public function findByUuid(string $projectUuid): ?Project
     {
         return $this->projectsByUuid[$projectUuid] ?? null;
+    }
+
+    public function findByNormalizedTitle(string $normalizedTitle): ?Project
+    {
+        $normalizedSearchTitle = mb_strtolower(trim(preg_replace('/\s+/', ' ', $normalizedTitle) ?? $normalizedTitle));
+
+        foreach ($this->projectsByUuid as $project) {
+            $projectTitle = trim(preg_replace('/\s+/', ' ', $project->getTitle()) ?? $project->getTitle());
+
+            if (mb_strtolower($projectTitle) === $normalizedSearchTitle) {
+                return $project;
+            }
+        }
+
+        return null;
     }
 
     public function findAllByFilter(App\ProjectManagement\Domain\Dto\ProjectListFilterDto $filter): array

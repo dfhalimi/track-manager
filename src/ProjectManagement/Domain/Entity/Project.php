@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: 'projects')]
 #[ORM\Index(name: 'idx_projects_category_uuid', columns: ['category_uuid'])]
+#[ORM\UniqueConstraint(name: 'uniq_projects_normalized_title', columns: ['normalized_title'])]
 class Project
 {
     #[ORM\Id]
@@ -20,6 +21,9 @@ class Project
 
     #[ORM\Column(type: Types::STRING, length: 255)]
     private string $title;
+
+    #[ORM\Column(name: 'normalized_title', type: Types::STRING, length: 255)]
+    private string $normalizedTitle;
 
     #[ORM\Column(name: 'category_uuid', type: Types::GUID)]
     private string $categoryUuid;
@@ -48,6 +52,16 @@ class Project
     public function setTitle(string $title): void
     {
         $this->title = $title;
+    }
+
+    public function getNormalizedTitle(): string
+    {
+        return $this->normalizedTitle;
+    }
+
+    public function setNormalizedTitle(string $normalizedTitle): void
+    {
+        $this->normalizedTitle = $normalizedTitle;
     }
 
     public function getCategoryUuid(): string
