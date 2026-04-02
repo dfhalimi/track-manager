@@ -10,7 +10,9 @@ readonly class ProjectListFilterDto
         public ?string $searchQuery,
         public ?string $categoryFilter,
         public ?string $sortBy,
-        public ?string $sortDirection
+        public ?string $sortDirection,
+        public int     $page,
+        public int     $perPage
     ) {
     }
 }

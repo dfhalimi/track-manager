@@ -12,6 +12,19 @@ interface ProjectOverviewPresentationServiceInterface
         ?string $searchQuery,
         ?string $categoryFilter,
         ?string $sortBy,
-        ?string $sortDirection
+        ?string $sortDirection,
+        int     $page,
+        int     $perPage
     ): ProjectListViewDto;
+
+    /**
+     * @return list<string>
+     */
+    public function buildProjectSearchSuggestions(
+        ?string $searchQuery,
+        ?string $categoryFilter,
+        ?string $sortBy,
+        ?string $sortDirection,
+        int     $limit
+    ): array;
 }

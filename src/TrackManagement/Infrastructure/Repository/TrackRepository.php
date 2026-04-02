@@ -63,12 +63,12 @@ class TrackRepository extends ServiceEntityRepository implements TrackRepository
         if ($searchQuery !== '') {
             if (ctype_digit($searchQuery)) {
                 $queryBuilder
-                    ->andWhere('track.trackNumber = :trackNumber OR track.title LIKE :query OR track.beatName LIKE :query')
+                    ->andWhere('track.trackNumber = :trackNumber OR track.title LIKE :query OR track.beatName LIKE :query OR track.publishingName LIKE :query')
                     ->setParameter('trackNumber', (int) $searchQuery)
                     ->setParameter('query', '%' . $searchQuery . '%');
             } else {
                 $queryBuilder
-                    ->andWhere('track.title LIKE :query OR track.beatName LIKE :query')
+                    ->andWhere('track.title LIKE :query OR track.beatName LIKE :query OR track.publishingName LIKE :query')
                     ->setParameter('query', '%' . $searchQuery . '%');
             }
         }

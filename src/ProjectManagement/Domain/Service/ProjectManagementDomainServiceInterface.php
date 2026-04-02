@@ -35,6 +35,11 @@ interface ProjectManagementDomainServiceInterface
     public function getAllProjects(ProjectListFilterDto $filter): ProjectListResultDto;
 
     /**
+     * @return list<string>
+     */
+    public function getProjectSearchSuggestions(ProjectListFilterDto $filter, int $limit): array;
+
+    /**
      * @return list<ProjectTrackAssignment>
      */
     public function getTrackAssignmentsByProjectUuid(string $projectUuid): array;
