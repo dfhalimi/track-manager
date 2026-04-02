@@ -7,6 +7,7 @@ import FileUploadController from "../src/FileImport/Presentation/Resources/asset
 import ProjectTrackReorderController from "../src/ProjectManagement/Presentation/Resources/assets/controllers/project_track_reorder_controller.ts";
 import AudioPlayerController from "../src/TrackManagement/Presentation/Resources/assets/controllers/audio_player_controller.ts";
 import ChecklistReorderController from "../src/TrackManagement/Presentation/Resources/assets/controllers/checklist_reorder_controller.ts";
+import DialogController from "../src/TrackManagement/Presentation/Resources/assets/controllers/dialog_controller.ts";
 import TrackTitleController from "../src/TrackManagement/Presentation/Resources/assets/controllers/track_title_controller.ts";
 
 const app = startStimulusApp();
@@ -17,6 +18,7 @@ app.register("file-upload", FileUploadController);
 app.register("project-track-reorder", ProjectTrackReorderController);
 app.register("audio-player", AudioPlayerController);
 app.register("checklist-reorder", ChecklistReorderController);
+app.register("dialog", DialogController);
 app.register("track-title", TrackTitleController);
 
 webuiBootstrap(app);

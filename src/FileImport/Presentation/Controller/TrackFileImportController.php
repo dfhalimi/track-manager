@@ -35,7 +35,7 @@ final class TrackFileImportController extends AbstractController
     {
         $uploadedFile = $this->resolveUploadedFile($request);
         if (!$uploadedFile instanceof UploadedFile) {
-            return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+            return $this->redirectAfterUpload($request, $trackUuid);
         }
 
         try {
@@ -47,7 +47,7 @@ final class TrackFileImportController extends AbstractController
             $this->addFlash('error', $throwable->getMessage());
         }
 
-        return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+        return $this->redirectAfterUpload($request, $trackUuid);
     }
 
     #[Route(path: '/tracks/{trackUuid}/file/replace', name: 'file_import.presentation.replace', methods: [Request::METHOD_POST])]
@@ -55,7 +55,7 @@ final class TrackFileImportController extends AbstractController
     {
         $uploadedFile = $this->resolveUploadedFile($request);
         if (!$uploadedFile instanceof UploadedFile) {
-            return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+            return $this->redirectAfterUpload($request, $trackUuid);
         }
 
         try {
@@ -67,7 +67,7 @@ final class TrackFileImportController extends AbstractController
             $this->addFlash('error', $throwable->getMessage());
         }
 
-        return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+        return $this->redirectAfterUpload($request, $trackUuid);
     }
 
     #[Route(path: '/tracks/{trackUuid}/file/play', name: 'file_import.presentation.play', methods: [Request::METHOD_GET])]
@@ -113,6 +113,17 @@ final class TrackFileImportController extends AbstractController
         $this->addFlash('error', 'Bitte wähle eine Datei aus.');
 
         return null;
+    }
+
+    private function redirectAfterUpload(Request $request, string $trackUuid): Response
+    {
+        $redirectTo = $request->request->get('redirect_to');
+
+        if (is_string($redirectTo) && str_starts_with($redirectTo, '/')) {
+            return $this->redirect($redirectTo);
+        }
+
+        return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
     }
 
     private function mapUploadErrorToMessage(int $errorCode): string
