@@ -25,6 +25,7 @@ readonly class ProjectDetailViewDto
         public array                     $availableTracks,
         public string                    $addTrackSuggestionsUrl,
         public ?ProjectMediaAssetViewDto $mediaAsset,
+        public string                    $historyUrl,
         public string                    $backToListUrl,
         public string                    $tracksIndexUrl,
         public string                    $editUrl,

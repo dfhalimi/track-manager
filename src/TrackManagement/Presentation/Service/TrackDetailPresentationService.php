@@ -92,6 +92,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
                 $this->urlGenerator->generate('file_export.presentation.export', ['trackUuid' => $trackUuid, 'format' => 'mp3']),
                 $this->urlGenerator->generate('file_export.presentation.export', ['trackUuid' => $trackUuid, 'format' => 'wav'])
             ),
+            $this->urlGenerator->generate('activity_history.presentation.track_modal', ['trackUuid' => $trackUuid]),
             $this->urlGenerator->generate('track_management.presentation.index'),
             $this->urlGenerator->generate('track_management.presentation.edit', ['trackUuid' => $trackUuid]),
             $this->urlGenerator->generate('track_management.presentation.cancel', ['trackUuid' => $trackUuid]),

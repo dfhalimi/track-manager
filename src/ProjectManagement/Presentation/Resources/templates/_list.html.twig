@@ -34,6 +34,7 @@
                 </div>
 
                 <div class="mt-4 flex justify-end gap-2">
+                    {% include '@activityhistory.presentation/_modal_trigger.html.twig' with { historyUrl: item.historyUrl, buttonTitle: 'Historie anzeigen' } only %}
                     <a href="{{ item.showUrl }}" title="Details" aria-label="Details" class="inline-flex h-8 w-8 items-center justify-center text-slate-600 transition hover:text-slate-900">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
                             <path d="M10 4.5c-3.878 0-7.162 2.285-8.327 5.5C2.838 13.215 6.122 15.5 10 15.5s7.162-2.285 8.327-5.5C17.162 6.785 13.878 4.5 10 4.5ZM10 13a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
@@ -103,6 +104,7 @@
                         <td class="px-3 py-3 text-slate-700">{{ item.trackCount }}</td>
                         <td class="px-3 py-3">
                             <div class="flex justify-end gap-2">
+                                {% include '@activityhistory.presentation/_modal_trigger.html.twig' with { historyUrl: item.historyUrl, buttonTitle: 'Historie anzeigen' } only %}
                                 <a href="{{ item.showUrl }}" title="Details" aria-label="Details" class="inline-flex h-8 w-8 items-center justify-center text-slate-600 transition hover:text-slate-900">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
                                         <path d="M10 4.5c-3.878 0-7.162 2.285-8.327 5.5C2.838 13.215 6.122 15.5 10 15.5s7.162-2.285 8.327-5.5C17.162 6.785 13.878 4.5 10 4.5ZM10 13a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />

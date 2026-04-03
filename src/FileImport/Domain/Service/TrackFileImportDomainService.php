@@ -8,12 +8,15 @@ use App\FileImport\Domain\Dto\ReplaceTrackFileInputDto;
 use App\FileImport\Domain\Dto\UploadTrackFileInputDto;
 use App\FileImport\Domain\Entity\TrackFile;
 use App\FileImport\Facade\Dto\TrackFileDto;
+use App\FileImport\Facade\SymfonyEvent\TrackFileReplacedSymfonyEvent;
+use App\FileImport\Facade\SymfonyEvent\TrackFileUploadedSymfonyEvent;
 use App\FileImport\Infrastructure\Repository\TrackFileRepositoryInterface;
 use App\FileImport\Infrastructure\Storage\TrackFileStorageInterface;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use ValueError;
 
 readonly class TrackFileImportDomainService implements TrackFileImportDomainServiceInterface
@@ -41,7 +44,8 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
     public function __construct(
         private TrackFileRepositoryInterface   $trackFileRepository,
         private TrackFileStorageInterface      $trackFileStorage,
-        private TrackManagementFacadeInterface $trackManagementFacade
+        private TrackManagementFacadeInterface $trackManagementFacade,
+        private EventDispatcherInterface       $eventDispatcher
     ) {
     }
 
@@ -71,9 +75,17 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
         $trackFile->setMimeType($storedFile->mimeType);
         $trackFile->setExtension($storedFile->extension);
         $trackFile->setSizeBytes($storedFile->sizeBytes);
-        $trackFile->setUploadedAt(DateAndTimeService::getDateTimeImmutable());
+        $occurredAt = DateAndTimeService::getDateTimeImmutable();
+        $trackFile->setUploadedAt($occurredAt);
 
         $this->trackFileRepository->save($trackFile);
+        $this->eventDispatcher->dispatch(
+            new TrackFileUploadedSymfonyEvent(
+                $input->trackUuid,
+                $trackFile->getOriginalFilename(),
+                $occurredAt
+            )
+        );
 
         return $this->mapTrackFileToDto($trackFile);
     }
@@ -99,9 +111,17 @@ readonly class TrackFileImportDomainService implements TrackFileImportDomainServ
         $existingTrackFile->setMimeType($storedFile->mimeType);
         $existingTrackFile->setExtension($storedFile->extension);
         $existingTrackFile->setSizeBytes($storedFile->sizeBytes);
-        $existingTrackFile->setUploadedAt(DateAndTimeService::getDateTimeImmutable());
+        $occurredAt = DateAndTimeService::getDateTimeImmutable();
+        $existingTrackFile->setUploadedAt($occurredAt);
 
         $this->trackFileRepository->save($existingTrackFile);
+        $this->eventDispatcher->dispatch(
+            new TrackFileReplacedSymfonyEvent(
+                $input->trackUuid,
+                $existingTrackFile->getOriginalFilename(),
+                $occurredAt
+            )
+        );
 
         return $this->mapTrackFileToDto($existingTrackFile);
     }

@@ -39,6 +39,12 @@ doctrine:
                 dir: "%kernel.project_dir%/src/TrackManagement/Domain/Entity"
                 prefix: 'App\TrackManagement\Domain\Entity'
 
+            App\ActivityHistory\Domain\Entity:
+                type: attribute
+                is_bundle: false
+                dir: "%kernel.project_dir%/src/ActivityHistory/Domain/Entity"
+                prefix: 'App\ActivityHistory\Domain\Entity'
+
             App\ProjectManagement\Domain\Entity:
                 type: attribute
                 is_bundle: false

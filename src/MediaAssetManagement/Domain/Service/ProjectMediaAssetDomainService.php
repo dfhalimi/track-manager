@@ -6,12 +6,15 @@ namespace App\MediaAssetManagement\Domain\Service;
 
 use App\MediaAssetManagement\Domain\Entity\ProjectMediaAsset;
 use App\MediaAssetManagement\Facade\Dto\ProjectMediaAssetDto;
+use App\MediaAssetManagement\Facade\SymfonyEvent\ProjectImageReplacedSymfonyEvent;
+use App\MediaAssetManagement\Facade\SymfonyEvent\ProjectImageUploadedSymfonyEvent;
 use App\MediaAssetManagement\Infrastructure\Repository\ProjectMediaAssetRepositoryInterface;
 use App\MediaAssetManagement\Infrastructure\Storage\ProjectMediaAssetStorageInterface;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use ValueError;
 
 readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomainServiceInterface
@@ -19,7 +22,8 @@ readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomain
     public function __construct(
         private ProjectMediaAssetRepositoryInterface $projectMediaAssetRepository,
         private ProjectMediaAssetStorageInterface    $projectMediaAssetStorage,
-        private ProjectManagementFacadeInterface     $projectManagementFacade
+        private ProjectManagementFacadeInterface     $projectManagementFacade,
+        private EventDispatcherInterface             $eventDispatcher
     ) {
     }
 
@@ -49,9 +53,17 @@ readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomain
         $mediaAsset->setSizeBytes($storedFile->sizeBytes);
         $mediaAsset->setWidthPixels($storedFile->widthPixels);
         $mediaAsset->setHeightPixels($storedFile->heightPixels);
-        $mediaAsset->setUploadedAt(DateAndTimeService::getDateTimeImmutable());
+        $occurredAt = DateAndTimeService::getDateTimeImmutable();
+        $mediaAsset->setUploadedAt($occurredAt);
 
         $this->projectMediaAssetRepository->save($mediaAsset);
+        $this->eventDispatcher->dispatch(
+            new ProjectImageUploadedSymfonyEvent(
+                $projectUuid,
+                $mediaAsset->getOriginalFilename(),
+                $occurredAt
+            )
+        );
 
         return $this->mapProjectMediaAssetToDto($mediaAsset);
     }
@@ -80,9 +92,17 @@ readonly class ProjectMediaAssetDomainService implements ProjectMediaAssetDomain
         $existingAsset->setSizeBytes($storedFile->sizeBytes);
         $existingAsset->setWidthPixels($storedFile->widthPixels);
         $existingAsset->setHeightPixels($storedFile->heightPixels);
-        $existingAsset->setUploadedAt(DateAndTimeService::getDateTimeImmutable());
+        $occurredAt = DateAndTimeService::getDateTimeImmutable();
+        $existingAsset->setUploadedAt($occurredAt);
 
         $this->projectMediaAssetRepository->save($existingAsset);
+        $this->eventDispatcher->dispatch(
+            new ProjectImageReplacedSymfonyEvent(
+                $projectUuid,
+                $existingAsset->getOriginalFilename(),
+                $occurredAt
+            )
+        );
 
         return $this->mapProjectMediaAssetToDto($existingAsset);
     }

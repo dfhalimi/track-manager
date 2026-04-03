@@ -28,6 +28,7 @@ readonly class TrackDetailViewDto
         public array             $checklistItems,
         public array             $projectMemberships,
         public ?TrackFileViewDto $trackFile,
+        public string            $historyUrl,
         public string            $backToListUrl,
         public string            $editUrl,
         public string            $cancelUrl,

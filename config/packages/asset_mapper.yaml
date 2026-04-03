@@ -3,6 +3,7 @@ framework:
         # The paths to make available to the asset mapper.
         paths:
             - assets/
+            - src/ActivityHistory/Presentation/Resources/assets/
             - src/ProjectManagement/Presentation/Resources/assets/
             - src/TrackManagement/Presentation/Resources/assets/
             - src/FileImport/Presentation/Resources/assets/
@@ -12,6 +13,7 @@ framework:
 sensiolabs_typescript:
     source_dir:
         - "%kernel.project_dir%/assets/"
+        - "%kernel.project_dir%/src/ActivityHistory/Presentation/Resources/assets/"
         - "%kernel.project_dir%/src/ProjectManagement/Presentation/Resources/assets/"
         - "%kernel.project_dir%/src/TrackManagement/Presentation/Resources/assets/"
         - "%kernel.project_dir%/src/FileImport/Presentation/Resources/assets/"

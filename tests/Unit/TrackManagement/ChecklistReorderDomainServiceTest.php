@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Entity\ChecklistItem;
 use App\TrackManagement\Domain\Service\ChecklistDomainService;
+use App\TrackManagement\Domain\Service\TrackStatusResolver;
 use App\TrackManagement\Infrastructure\Repository\ChecklistItemRepositoryInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 describe('Checklist reordering', function (): void {
     it('reassigns checklist item positions in the submitted order', function (): void {
@@ -15,7 +17,7 @@ describe('Checklist reordering', function (): void {
         $third  = createChecklistItem('track-1', 'item-3', 3);
 
         $repository = new InMemoryChecklistItemRepository([$first, $second, $third]);
-        $service    = new ChecklistDomainService($repository);
+        $service    = new ChecklistDomainService($repository, new TrackStatusResolver(), new EventDispatcher());
 
         $service->reorderChecklistItems(
             new ReorderChecklistItemsInputDto('track-1', ['item-3', 'item-1', 'item-2'])
@@ -35,7 +37,7 @@ describe('Checklist reordering', function (): void {
             createChecklistItem('track-1', 'item-2', 2),
             createChecklistItem('track-1', 'item-3', 3),
         ]);
-        $service = new ChecklistDomainService($repository);
+        $service = new ChecklistDomainService($repository, new TrackStatusResolver(), new EventDispatcher());
 
         $action = static fn () => $service->reorderChecklistItems(
             new ReorderChecklistItemsInputDto('track-1', ['item-1', 'item-1', 'item-3'])
@@ -50,7 +52,7 @@ describe('Checklist reordering', function (): void {
             createChecklistItem('track-1', 'item-2', 2),
             createChecklistItem('track-1', 'item-3', 3),
         ]);
-        $service = new ChecklistDomainService($repository);
+        $service = new ChecklistDomainService($repository, new TrackStatusResolver(), new EventDispatcher());
 
         $action = static fn () => $service->reorderChecklistItems(
             new ReorderChecklistItemsInputDto('track-1', ['item-1', 'item-2'])
@@ -65,7 +67,7 @@ describe('Checklist reordering', function (): void {
             createChecklistItem('track-1', 'item-2', 2),
             createChecklistItem('track-1', 'item-3', 3),
         ]);
-        $service = new ChecklistDomainService($repository);
+        $service = new ChecklistDomainService($repository, new TrackStatusResolver(), new EventDispatcher());
 
         $action = static fn () => $service->reorderChecklistItems(
             new ReorderChecklistItemsInputDto('track-1', ['item-1', 'item-2', 'item-999'])
