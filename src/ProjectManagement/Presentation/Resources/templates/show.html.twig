@@ -12,7 +12,9 @@
                 <p class="text-sm text-slate-500">{{ view.categoryName }}</p>
                 <h1 class="text-3xl font-semibold text-slate-900">{{ view.title }}</h1>
                 <p class="text-sm text-slate-600">Erstellt am {{ view.createdAt }}</p>
-                <p class="text-sm text-slate-600">Veröffentlicht am {{ view.publishedAt ?: '—' }}</p>
+                {% if view.publishedAt %}
+                    <p class="text-sm text-slate-600">Veröffentlicht am {{ view.publishedAt }}</p>
+                {% endif %}
             </div>
             <div class="flex gap-3">
                 {% include '@activityhistory.presentation/_modal_trigger.html.twig' with { historyUrl: view.historyUrl, buttonTitle: 'Historie anzeigen', buttonLabel: 'Historie', variant: 'button' } only %}
