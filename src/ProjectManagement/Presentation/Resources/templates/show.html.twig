@@ -25,12 +25,45 @@
                             <button type="submit" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Veröffentlichung aufheben</button>
                         </form>
                     {% else %}
-                        <div data-controller="dialog">
-                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="dialog#open">Veröffentlichen</button>
+                        <div
+                            data-controller="project-publish"
+                            data-project-publish-requires-confirmation-value="{{ view.publishReadiness.requiresConfirmation ? 'true' : 'false' }}"
+                        >
+                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="project-publish#open">Veröffentlichen</button>
+                            <dialog
+                                class="fixed left-1/2 top-1/2 m-0 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded border border-slate-200 p-0 shadow-xl backdrop:bg-slate-900/30"
+                                data-project-publish-target="warningDialog"
+                                data-action="click->project-publish#closeOnBackdrop"
+                            >
+                                <div class="space-y-4 p-6">
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-slate-900">Projekt prüfen vor dem Veröffentlichen</h2>
+                                        {% if not view.publishReadiness.hasTracks %}
+                                            <p class="mt-1 text-sm text-slate-600">Dieses Projekt enthält aktuell keine Tracks. Du kannst es trotzdem veröffentlichen, solltest das aber bewusst bestätigen.</p>
+                                        {% else %}
+                                            <p class="mt-1 text-sm text-slate-600">Nicht alle Tracks sind vollständig vorbereitet. Bei den folgenden Tracks fehlt noch etwas:</p>
+                                        {% endif %}
+                                    </div>
+                                    {% if view.publishReadiness.trackIssues is not empty %}
+                                        <ul class="max-h-72 space-y-3 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                                            {% for issue in view.publishReadiness.trackIssues %}
+                                                <li>
+                                                    <p class="font-medium">{{ issue.label }}</p>
+                                                    <p>Fehlt: {{ issue.missingRequirements|join(', ') }}</p>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    <div class="flex justify-end gap-3">
+                                        <button type="button" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900" data-action="project-publish#closeWarning">Abbrechen</button>
+                                        <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="project-publish#continueToPublish">Trotzdem Veröffentlichen</button>
+                                    </div>
+                                </div>
+                            </dialog>
                             <dialog
                                 class="fixed left-1/2 top-1/2 m-0 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded border border-slate-200 p-0 shadow-xl backdrop:bg-slate-900/30"
-                                data-dialog-target="dialog"
-                                data-action="click->dialog#closeOnBackdrop"
+                                data-project-publish-target="publishDialog"
+                                data-action="click->project-publish#closeOnBackdrop"
                             >
                                 <div class="space-y-4 p-6">
                                     <div>
@@ -39,6 +72,7 @@
                                     </div>
                                     <form method="post" action="{{ view.publishUrl }}" class="space-y-4">
                                         <input type="hidden" name="_token" value="{{ csrf_token('publish_project_' ~ view.uuid) }}">
+                                        <input type="hidden" name="force_publish" value="0" data-project-publish-target="forceInput">
                                         <div>
                                             <label class="mb-1 block text-sm font-medium text-slate-700">Veröffentlicht am</label>
                                             <input
@@ -51,7 +85,7 @@
                                             <p class="mt-1 text-xs text-slate-500">Optional. Wenn du nichts änderst, wird der aktuelle Zeitpunkt übernommen. Zukunftsdaten sind nicht erlaubt.</p>
                                         </div>
                                         <div class="flex justify-end gap-3">
-                                            <button type="button" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900" data-action="dialog#close">Abbrechen</button>
+                                            <button type="button" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900" data-action="project-publish#closePublish">Abbrechen</button>
                                             <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Veröffentlichen</button>
                                         </div>
                                     </form>
