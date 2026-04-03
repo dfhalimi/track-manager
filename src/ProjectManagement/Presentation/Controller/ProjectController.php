@@ -13,6 +13,7 @@ use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface
 use App\ProjectManagement\Presentation\Service\ProjectDetailPresentationServiceInterface;
 use App\ProjectManagement\Presentation\Service\ProjectFormPresentationServiceInterface;
 use App\ProjectManagement\Presentation\Service\ProjectOverviewPresentationServiceInterface;
+use App\ProjectManagement\Presentation\Service\ProjectPublishReadinessPresentationServiceInterface;
 use DateTimeImmutable;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,12 +28,13 @@ use ValueError;
 final class ProjectController extends AbstractController
 {
     public function __construct(
-        private readonly ProjectOverviewPresentationServiceInterface $projectOverviewPresentationService,
-        private readonly ProjectDetailPresentationServiceInterface   $projectDetailPresentationService,
-        private readonly ProjectFormPresentationServiceInterface     $projectFormPresentationService,
-        private readonly ProjectManagementDomainServiceInterface     $projectManagementDomainService,
-        private readonly LocalizedDateTimeService                    $localizedDateTimeService,
-        private readonly MediaAssetManagementFacadeInterface         $mediaAssetManagementFacade
+        private readonly ProjectOverviewPresentationServiceInterface         $projectOverviewPresentationService,
+        private readonly ProjectDetailPresentationServiceInterface           $projectDetailPresentationService,
+        private readonly ProjectFormPresentationServiceInterface             $projectFormPresentationService,
+        private readonly ProjectPublishReadinessPresentationServiceInterface $projectPublishReadinessPresentationService,
+        private readonly ProjectManagementDomainServiceInterface             $projectManagementDomainService,
+        private readonly LocalizedDateTimeService                            $localizedDateTimeService,
+        private readonly MediaAssetManagementFacadeInterface                 $mediaAssetManagementFacade
     ) {
     }
 
@@ -212,6 +214,16 @@ final class ProjectController extends AbstractController
         }
 
         try {
+            $publishReadiness = $this->projectPublishReadinessPresentationService->buildProjectPublishReadinessViewDto($projectUuid);
+            if (
+                $publishReadiness->requiresConfirmation
+                && $request->request->getString('force_publish', '0') !== '1'
+            ) {
+                $this->addFlash('error', 'Bitte bestätige das Veröffentlichen trotz fehlender Track-Angaben noch einmal.');
+
+                return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+            }
+
             $this->projectManagementDomainService->publishProject(
                 new PublishProjectInputDto(
                     $projectUuid,

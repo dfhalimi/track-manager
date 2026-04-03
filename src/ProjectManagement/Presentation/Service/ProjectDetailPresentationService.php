@@ -20,21 +20,23 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 readonly class ProjectDetailPresentationService implements ProjectDetailPresentationServiceInterface
 {
     public function __construct(
-        private ProjectManagementFacadeInterface    $projectManagementFacade,
-        private TrackManagementFacadeInterface      $trackManagementFacade,
-        private FileImportFacadeInterface           $fileImportFacade,
-        private MediaAssetManagementFacadeInterface $mediaAssetManagementFacade,
-        private LocalizedDateTimeService            $localizedDateTimeService,
-        private UrlGeneratorInterface               $urlGenerator
+        private ProjectManagementFacadeInterface                    $projectManagementFacade,
+        private TrackManagementFacadeInterface                      $trackManagementFacade,
+        private FileImportFacadeInterface                           $fileImportFacade,
+        private MediaAssetManagementFacadeInterface                 $mediaAssetManagementFacade,
+        private ProjectPublishReadinessPresentationServiceInterface $projectPublishReadinessPresentationService,
+        private LocalizedDateTimeService                            $localizedDateTimeService,
+        private UrlGeneratorInterface                               $urlGenerator
     ) {
     }
 
     public function buildProjectDetailViewDto(string $projectUuid): ProjectDetailViewDto
     {
-        $project     = $this->projectManagementFacade->getProjectByUuid($projectUuid);
-        $assignments = $this->projectManagementFacade->getTrackAssignmentsByProjectUuid($projectUuid);
-        $allTracks   = $this->trackManagementFacade->getAllTracksForSelection();
-        $mediaAsset  = $this->mediaAssetManagementFacade->getCurrentProjectMediaAssetByProjectUuid($projectUuid);
+        $project          = $this->projectManagementFacade->getProjectByUuid($projectUuid);
+        $assignments      = $this->projectManagementFacade->getTrackAssignmentsByProjectUuid($projectUuid);
+        $allTracks        = $this->trackManagementFacade->getAllTracksForSelection();
+        $mediaAsset       = $this->mediaAssetManagementFacade->getCurrentProjectMediaAssetByProjectUuid($projectUuid);
+        $publishReadiness = $this->projectPublishReadinessPresentationService->buildProjectPublishReadinessViewDto($projectUuid);
 
         $tracksByUuid = [];
         foreach ($allTracks as $track) {
@@ -89,6 +91,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $project->published,
             $project->publishedAt === null ? null : $this->localizedDateTimeService->formatForDisplay($project->publishedAt),
             $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
+            $publishReadiness,
             $hasExportableTracks,
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'mp3']),
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'wav']),
