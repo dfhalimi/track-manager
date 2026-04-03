@@ -277,8 +277,8 @@ jobs:
                   password: ${{ secrets.GITHUB_TOKEN }}
             - name: Pull app image
               run: docker pull ${{ env.APP_IMAGE }}
-            - name: Start E2E stack
-              run: docker compose ${{ env.COMPOSE_FILES }} up -d app messenger nginx mariadb
+            - name: Start E2E app stack
+              run: docker compose ${{ env.COMPOSE_FILES }} up -d app nginx mariadb
             - name: Wait for MariaDB
               run: |
                   for i in $(seq 1 30); do
@@ -312,6 +312,8 @@ jobs:
                   docker compose ${{ env.COMPOSE_FILES }} exec -T app php bin/console doctrine:database:create --env=test
                   docker compose ${{ env.COMPOSE_FILES }} exec -T app php bin/console doctrine:migrations:migrate --no-interaction --env=test
                   docker compose ${{ env.COMPOSE_FILES }} exec -T app php bin/console app:e2e:create-user e2e@example.com --password=e2e-secret
+            - name: Start messenger
+              run: docker compose ${{ env.COMPOSE_FILES }} up -d messenger
             - name: Restore Playwright deps cache
               uses: actions/cache@v4
               with:
