@@ -44,6 +44,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
         $project->setCategoryUuid($this->resolveCategory($input->categoryName)->getUuid());
         $project->setArtists($this->normalizeArtists($input->artists));
+        $project->setPublished(false);
+        $project->setPublishedAt(null);
         $project->setCreatedAt($now);
         $project->setUpdatedAt($now);
 
@@ -101,6 +103,44 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $this->validateProject($project);
         $project->setCancelled(false);
         $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+        $this->projectRepository->save($project);
+
+        return $project;
+    }
+
+    public function publishProject(string $projectUuid): Project
+    {
+        $project = $this->projectRepository->getByUuid($projectUuid);
+        $this->assertProjectPublicationIsEditable($project);
+
+        if ($project->isPublished()) {
+            return $project;
+        }
+
+        $now = DateAndTimeService::getDateTimeImmutable();
+
+        $project->setPublished(true);
+        $project->setPublishedAt($now);
+        $project->setUpdatedAt($now);
+        $this->projectRepository->save($project);
+
+        return $project;
+    }
+
+    public function unpublishProject(string $projectUuid): Project
+    {
+        $project = $this->projectRepository->getByUuid($projectUuid);
+        $this->assertProjectPublicationIsEditable($project);
+
+        if (!$project->isPublished()) {
+            return $project;
+        }
+
+        $now = DateAndTimeService::getDateTimeImmutable();
+
+        $project->setPublished(false);
+        $project->setPublishedAt(null);
+        $project->setUpdatedAt($now);
         $this->projectRepository->save($project);
 
         return $project;
@@ -182,6 +222,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
                 $this->projectCategoryRepository->getByUuid($project->getCategoryUuid())->getName(),
                 $project->getArtists(),
                 $project->isCancelled(),
+                $project->isPublished(),
                 count($this->projectTrackAssignmentRepository->findByProjectUuid($project->getUuid())),
                 $project->getUpdatedAt()
             );
@@ -403,6 +444,13 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
     {
         if ($project->isCancelled()) {
             throw new ValueError('Archivierte Projekte koennen nicht bearbeitet werden.');
+        }
+    }
+
+    private function assertProjectPublicationIsEditable(Project $project): void
+    {
+        if ($project->isCancelled()) {
+            throw new ValueError('Archivierte Projekte koennen nicht veroeffentlicht oder ent-veroeffentlicht werden.');
         }
     }
 

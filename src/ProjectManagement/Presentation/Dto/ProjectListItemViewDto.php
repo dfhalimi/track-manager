@@ -15,6 +15,7 @@ readonly class ProjectListItemViewDto
         public string $categoryName,
         public array  $artists,
         public bool   $cancelled,
+        public bool   $published,
         public int    $trackCount,
         public string $showUrl,
         public string $editUrl

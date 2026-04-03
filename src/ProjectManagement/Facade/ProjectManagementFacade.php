@@ -31,6 +31,8 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
             $project->getCategoryUuid(),
             $category->getName(),
             $project->isCancelled(),
+            $project->isPublished(),
+            $project->getPublishedAt(),
             $project->getCreatedAt(),
             $project->getUpdatedAt()
         );
@@ -85,7 +87,8 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
                 $project->getUuid(),
                 $project->getTitle(),
                 $category->getName(),
-                $assignment->getPosition()
+                $assignment->getPosition(),
+                $project->isPublished()
             );
         }
 

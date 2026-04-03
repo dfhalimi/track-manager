@@ -10,6 +10,7 @@ readonly class TrackProjectMembershipViewDto
         public string $projectTitle,
         public string $categoryName,
         public int    $position,
+        public bool   $published,
         public string $showUrl
     ) {
     }

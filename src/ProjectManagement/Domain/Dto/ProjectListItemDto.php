@@ -17,6 +17,7 @@ readonly class ProjectListItemDto
         public string            $categoryName,
         public array             $artists,
         public bool              $cancelled,
+        public bool              $published,
         public int               $trackCount,
         public DateTimeImmutable $updatedAt
     ) {

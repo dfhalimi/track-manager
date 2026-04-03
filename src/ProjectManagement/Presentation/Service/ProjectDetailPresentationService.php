@@ -83,6 +83,8 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $project->categoryName,
             $project->createdAt->format('d.m.Y H:i'),
             $project->cancelled,
+            $project->published,
+            $project->publishedAt?->format('d.m.Y H:i'),
             $hasExportableTracks,
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'mp3']),
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'wav']),
@@ -104,6 +106,8 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.cancel', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.reactivate', ['projectUuid' => $projectUuid]),
+            $this->urlGenerator->generate('project_management.presentation.publish', ['projectUuid' => $projectUuid]),
+            $this->urlGenerator->generate('project_management.presentation.unpublish', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.tracks.add', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.tracks.reorder', ['projectUuid' => $projectUuid])
         );

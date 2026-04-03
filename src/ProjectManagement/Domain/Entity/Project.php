@@ -37,6 +37,12 @@ class Project
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $cancelled = false;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $published = false;
+
+    #[ORM\Column(name: 'published_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?DateTimeImmutable $publishedAt = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
 
@@ -107,6 +113,26 @@ class Project
     public function setCancelled(bool $cancelled): void
     {
         $this->cancelled = $cancelled;
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->published;
+    }
+
+    public function setPublished(bool $published): void
+    {
+        $this->published = $published;
+    }
+
+    public function getPublishedAt(): ?DateTimeImmutable
+    {
+        return $this->publishedAt;
+    }
+
+    public function setPublishedAt(?DateTimeImmutable $publishedAt): void
+    {
+        $this->publishedAt = $publishedAt;
     }
 
     public function getCreatedAt(): DateTimeImmutable

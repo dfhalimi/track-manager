@@ -27,6 +27,10 @@ interface ProjectManagementDomainServiceInterface
 
     public function reactivateProject(string $projectUuid): Project;
 
+    public function publishProject(string $projectUuid): Project;
+
+    public function unpublishProject(string $projectUuid): Project;
+
     public function getProjectByUuid(string $projectUuid): Project;
 
     /**

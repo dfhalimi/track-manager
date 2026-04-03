@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Domain\Service;
 
+use App\ProjectManagement\Infrastructure\Repository\ProjectRepositoryInterface;
+use App\ProjectManagement\Infrastructure\Repository\ProjectTrackAssignmentRepositoryInterface;
 use App\TrackManagement\Domain\Dto\CreateTrackInputDto;
 use App\TrackManagement\Domain\Dto\TrackListFilterDto;
 use App\TrackManagement\Domain\Dto\TrackListItemDto;
@@ -22,11 +24,13 @@ use function abs;
 readonly class TrackManagementDomainService implements TrackManagementDomainServiceInterface
 {
     public function __construct(
-        private TrackRepositoryInterface          $trackRepository,
-        private TrackNamingDomainServiceInterface $trackNamingDomainService,
-        private ChecklistDomainServiceInterface   $checklistDomainService,
-        private ProgressCalculatorInterface       $progressCalculator,
-        private TrackStatusResolverInterface      $trackStatusResolver
+        private TrackRepositoryInterface                  $trackRepository,
+        private TrackNamingDomainServiceInterface         $trackNamingDomainService,
+        private ChecklistDomainServiceInterface           $checklistDomainService,
+        private ProgressCalculatorInterface               $progressCalculator,
+        private TrackStatusResolverInterface              $trackStatusResolver,
+        private ProjectTrackAssignmentRepositoryInterface $projectTrackAssignmentRepository,
+        private ProjectRepositoryInterface                $projectRepository
     ) {
     }
 
@@ -218,6 +222,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
                 $this->progressCalculator->calculateProgress($checklistItems),
                 $status->value,
                 $track->isCancelled(),
+                $this->isTrackPublished($track->getUuid()),
                 false,
                 $track->getUpdatedAt()
             );
@@ -392,5 +397,21 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
     private function matchesSearchQuery(string $candidate, string $searchQuery): bool
     {
         return mb_stripos($candidate, $searchQuery) !== false;
+    }
+
+    private function isTrackPublished(string $trackUuid): bool
+    {
+        foreach ($this->projectTrackAssignmentRepository->findByTrackUuid($trackUuid) as $assignment) {
+            $project = $this->projectRepository->findByUuid($assignment->getProjectUuid());
+            if ($project === null || $project->isCancelled()) {
+                continue;
+            }
+
+            if ($project->isPublished()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

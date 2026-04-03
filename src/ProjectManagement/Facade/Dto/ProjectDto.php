@@ -9,13 +9,15 @@ use DateTimeImmutable;
 readonly class ProjectDto
 {
     public function __construct(
-        public string            $uuid,
-        public string            $title,
-        public string            $categoryUuid,
-        public string            $categoryName,
-        public bool              $cancelled,
-        public DateTimeImmutable $createdAt,
-        public DateTimeImmutable $updatedAt
+        public string             $uuid,
+        public string             $title,
+        public string             $categoryUuid,
+        public string             $categoryName,
+        public bool               $cancelled,
+        public bool               $published,
+        public ?DateTimeImmutable $publishedAt,
+        public DateTimeImmutable  $createdAt,
+        public DateTimeImmutable  $updatedAt
     ) {
     }
 }

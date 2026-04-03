@@ -55,6 +55,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
                 $status->getLabel(),
                 $status->value,
                 $item->cancelled,
+                $item->published,
                 $item->progress,
                 $trackFile !== null,
                 $this->urlGenerator->generate('file_import.presentation.upload', ['trackUuid' => $item->uuid]),
