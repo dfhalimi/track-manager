@@ -8,6 +8,7 @@ use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
 use App\ProjectManagement\Presentation\Dto\ProjectFormViewDto;
+use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 readonly class ProjectFormPresentationService implements ProjectFormPresentationServiceInterface
@@ -32,7 +33,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             $this->buildCategoryOptions(),
             false,
             null,
-            $this->localizedDateTimeService->formatForInput(new \DateTimeImmutable()),
+            $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $this->urlGenerator->generate('project_management.presentation.create'),
             $this->urlGenerator->generate('project_management.presentation.index'),
             'Projekt erstellen',
@@ -58,7 +59,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             $this->buildCategoryOptions(),
             $project->isPublished(),
             $publishedAtInputValue ?? $this->localizedDateTimeService->formatForInput($project->getPublishedAt()),
-            $this->localizedDateTimeService->formatForInput(new \DateTimeImmutable()),
+            $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $projectUuid]),
             'Projekt speichern',

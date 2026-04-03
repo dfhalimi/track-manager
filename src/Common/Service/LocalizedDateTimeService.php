@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use ValueError;
 
-readonly class LocalizedDateTimeService
+readonly class LocalizedDateTimeService implements LocalizedDateTimeServiceInterface
 {
     private DateTimeZone $displayTimezone;
     private DateTimeZone $storageTimezone;

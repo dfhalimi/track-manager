@@ -14,6 +14,7 @@ use App\ProjectManagement\Presentation\Dto\ProjectMediaAssetViewDto;
 use App\ProjectManagement\Presentation\Dto\ProjectTrackAssignmentViewDto;
 use App\ProjectManagement\Presentation\Dto\ProjectTrackOptionViewDto;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
+use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 readonly class ProjectDetailPresentationService implements ProjectDetailPresentationServiceInterface
@@ -87,7 +88,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $project->cancelled,
             $project->published,
             $project->publishedAt === null ? null : $this->localizedDateTimeService->formatForDisplay($project->publishedAt),
-            $this->localizedDateTimeService->formatForInput(new \DateTimeImmutable()),
+            $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $hasExportableTracks,
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'mp3']),
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'wav']),

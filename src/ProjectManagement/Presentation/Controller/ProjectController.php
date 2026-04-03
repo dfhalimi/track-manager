@@ -14,6 +14,7 @@ use App\ProjectManagement\Presentation\Service\ProjectDetailPresentationServiceI
 use App\ProjectManagement\Presentation\Service\ProjectFormPresentationServiceInterface;
 use App\ProjectManagement\Presentation\Service\ProjectOverviewPresentationServiceInterface;
 use DateTimeImmutable;
+use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -215,7 +216,7 @@ final class ProjectController extends AbstractController
                 new PublishProjectInputDto(
                     $projectUuid,
                     $this->parsePublishedAtInput($request->request->getString('published_at', ''), false)
-                        ?? new DateTimeImmutable()
+                        ?? DateAndTimeService::getDateTimeImmutable()
                 )
             );
             $this->addFlash('success', 'Projekt wurde veröffentlicht.');

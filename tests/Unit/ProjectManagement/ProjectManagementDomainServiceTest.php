@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
 use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
@@ -11,7 +12,6 @@ use App\ProjectManagement\Domain\Entity\Project;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Entity\ProjectTrackAssignment;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainService;
-use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Infrastructure\Repository\ProjectCategoryRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectTrackAssignmentRepositoryInterface;
@@ -160,14 +160,14 @@ describe('ProjectManagementDomainService', function (): void {
             new EventDispatcher()
         );
 
-        $publishedAt      = new \DateTimeImmutable('2026-04-01 10:15');
+        $publishedAt      = createTestDateTime('2026-04-01 10:15');
         $publishedProject = $service->publishProject(new PublishProjectInputDto('project-1', $publishedAt));
 
         expect($publishedProject->isPublished())->toBeTrue();
         expect($publishedProject->getPublishedAt())->toEqual($publishedAt);
 
         $initialPublishedAt = $publishedProject->getPublishedAt();
-        $publishedAgain     = $service->publishProject(new PublishProjectInputDto('project-1', new \DateTimeImmutable('2026-04-02 12:00')));
+        $publishedAgain     = $service->publishProject(new PublishProjectInputDto('project-1', createTestDateTime('2026-04-02 12:00')));
 
         expect($publishedAgain->isPublished())->toBeTrue();
         expect($publishedAgain->getPublishedAt())->toEqual($initialPublishedAt);
@@ -216,7 +216,7 @@ describe('ProjectManagementDomainService', function (): void {
                 'Spring Tape',
                 'single',
                 [],
-                new \DateTimeImmutable('2026-03-28 18:30')
+                createTestDateTime('2026-03-28 18:30')
             )
         );
 
@@ -285,6 +285,18 @@ function createAssignment(string $uuid, string $projectUuid, string $trackUuid, 
 function createLocalizedDateTimeService(): LocalizedDateTimeService
 {
     return new LocalizedDateTimeService('Europe/Berlin');
+}
+
+function createTestDateTime(string $dateTime): DateTimeImmutable
+{
+    [$datePart, $timePart] = explode(' ', $dateTime);
+    [$year, $month, $day]  = array_map('intval', explode('-', $datePart));
+    [$hour, $minute]       = array_map('intval', explode(':', $timePart));
+
+    return DateAndTimeService::getDateTimeImmutable()
+        ->setTimezone(new DateTimeZone('UTC'))
+        ->setDate($year, $month, $day)
+        ->setTime($hour, $minute);
 }
 
 final class InMemoryProjectCategoryRepository implements ProjectCategoryRepositoryInterface

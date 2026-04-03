@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Domain\Service;
 
-use App\Common\Service\LocalizedDateTimeService;
+use App\Common\Service\LocalizedDateTimeServiceInterface;
 use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
-use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ProjectListFilterDto;
 use App\ProjectManagement\Domain\Dto\ProjectListItemDto;
 use App\ProjectManagement\Domain\Dto\ProjectListResultDto;
+use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
 use App\ProjectManagement\Domain\Dto\RemoveTrackFromProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ReorderProjectTracksInputDto;
 use App\ProjectManagement\Domain\Dto\UpdateProjectInputDto;
@@ -31,6 +31,7 @@ use App\ProjectManagement\Infrastructure\Repository\ProjectCategoryRepositoryInt
 use App\ProjectManagement\Infrastructure\Repository\ProjectRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectTrackAssignmentRepositoryInterface;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
+use DateTimeImmutable;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -43,7 +44,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         private ProjectCategoryRepositoryInterface        $projectCategoryRepository,
         private ProjectTrackAssignmentRepositoryInterface $projectTrackAssignmentRepository,
         private TrackManagementFacadeInterface            $trackManagementFacade,
-        private LocalizedDateTimeService                  $localizedDateTimeService,
+        private LocalizedDateTimeServiceInterface         $localizedDateTimeService,
         private EventDispatcherInterface                  $eventDispatcher
     ) {
     }
@@ -679,9 +680,9 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         return $trimmed === '' ? '—' : $trimmed;
     }
 
-    private function normalizePublishedAt(?\DateTimeImmutable $publishedAt): \DateTimeImmutable
+    private function normalizePublishedAt(?DateTimeImmutable $publishedAt): DateTimeImmutable
     {
-        if (!$publishedAt instanceof \DateTimeImmutable) {
+        if (!$publishedAt instanceof DateTimeImmutable) {
             throw new ValueError('Bitte gib ein Veröffentlichungsdatum an.');
         }
 
@@ -692,7 +693,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         return $publishedAt;
     }
 
-    private function formatPublishedAt(?\DateTimeImmutable $publishedAt): string
+    private function formatPublishedAt(?DateTimeImmutable $publishedAt): string
     {
         return $publishedAt === null ? '—' : $this->localizedDateTimeService->formatForDisplay($publishedAt);
     }
