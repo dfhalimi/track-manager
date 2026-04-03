@@ -19,7 +19,15 @@
             {% endfor %}
         {% endfor %}
 
-        <form method="post" action="{{ view.formAction }}" enctype="multipart/form-data" class="space-y-4 rounded border border-slate-200 bg-white p-6" data-controller="project-form">
+        <form
+            method="post"
+            action="{{ view.formAction }}"
+            enctype="multipart/form-data"
+            class="space-y-4 rounded border border-slate-200 bg-white p-6"
+            data-controller="project-form project-image-upload"
+            data-project-image-upload-auto-submit-value="false"
+            data-project-image-upload-target-size-value="3000"
+        >
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">Projekt-Titel</label>
@@ -71,14 +79,24 @@
 
             <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700">{{ view.isEditMode ? 'Projektbild ersetzen (optional)' : 'Projektbild (optional)' }}</label>
-                <input type="file" name="project_image" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">
-                <p class="mt-1 text-xs text-slate-500">Erlaubte Formate: JPG oder PNG. Du kannst das Bild direkt mit anlegen oder später ergänzen und dann als quadratisches Spotify-Cover exportieren.</p>
+                <input
+                    type="file"
+                    name="project_image"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                    data-project-image-upload-target="input"
+                    data-action="change->project-image-upload#selectFile"
+                >
+                <p class="mt-1 text-xs text-slate-500">Erlaubte Formate: JPG oder PNG. Empfohlen: quadratisch, idealerweise 3000 x 3000 px, mindestens 1400 x 1400 px.</p>
+                <p class="mt-1 text-xs text-slate-500">Nach der Auswahl öffnet sich direkt ein verpflichtender quadratischer Zuschnitt für das Spotify-Cover.</p>
             </div>
 
             <div class="flex items-center gap-3">
                 <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">{{ view.submitLabel }}</button>
                 <a href="{{ view.cancelUrl }}" class="text-sm text-slate-600 underline">Abbrechen</a>
             </div>
+
+            {% include '@projectmanagement.presentation/_project_image_crop_dialog.html.twig' %}
         </form>
     </div>
 {% endblock %}

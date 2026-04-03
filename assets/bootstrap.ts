@@ -9,6 +9,7 @@ import ProjectTrackPickerController from "../src/ProjectManagement/Presentation/
 import ProjectPublishController from "../src/ProjectManagement/Presentation/Resources/assets/controllers/project_publish_controller.ts";
 import ProjectTrackReorderController from "../src/ProjectManagement/Presentation/Resources/assets/controllers/project_track_reorder_controller.ts";
 import ProjectFormController from "../src/ProjectManagement/Presentation/Resources/assets/controllers/project_form_controller.ts";
+import ProjectImageUploadController from "../src/ProjectManagement/Presentation/Resources/assets/controllers/project_image_upload_controller.ts";
 import AudioPlayerController from "../src/TrackManagement/Presentation/Resources/assets/controllers/audio_player_controller.ts";
 import ChecklistReorderController from "../src/TrackManagement/Presentation/Resources/assets/controllers/checklist_reorder_controller.ts";
 import DialogController from "../src/TrackManagement/Presentation/Resources/assets/controllers/dialog_controller.ts";
@@ -24,6 +25,7 @@ app.register("project-track-picker", ProjectTrackPickerController);
 app.register("project-publish", ProjectPublishController);
 app.register("project-track-reorder", ProjectTrackReorderController);
 app.register("project-form", ProjectFormController);
+app.register("project-image-upload", ProjectImageUploadController);
 app.register("audio-player", AudioPlayerController);
 app.register("checklist-reorder", ChecklistReorderController);
 app.register("dialog", DialogController);
