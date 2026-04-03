@@ -141,17 +141,21 @@
                                 method="post"
                                 enctype="multipart/form-data"
                                 class="space-y-2"
-                                data-controller="file-upload"
+                                data-controller="project-image-upload"
+                                data-project-image-upload-auto-submit-value="true"
+                                data-project-image-upload-target-size-value="3000"
                             >
                                 <input
                                     type="file"
                                     name="project_image"
                                     accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                                     class="hidden"
-                                    data-file-upload-target="input"
-                                    data-action="change->file-upload#submitOnChange"
+                                    data-project-image-upload-target="input"
+                                    data-action="change->project-image-upload#selectFile"
                                 >
-                                <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="file-upload#openPicker">Projektbild ersetzen</button>
+                                <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="project-image-upload#openPicker">Projektbild ersetzen</button>
+                                <p class="text-xs text-slate-500">Empfohlen: quadratisch, idealerweise 3000 x 3000 px, mindestens 1400 x 1400 px. Nach der Auswahl ist ein Zuschnitt verpflichtend.</p>
+                                {% include '@projectmanagement.presentation/_project_image_crop_dialog.html.twig' %}
                             </form>
                         {% else %}
                             <p class="text-xs text-slate-500">Bestehende Projektbilder bleiben verfuegbar, koennen aber nicht ersetzt werden.</p>
