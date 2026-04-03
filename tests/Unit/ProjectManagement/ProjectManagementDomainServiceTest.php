@@ -20,6 +20,7 @@ use App\TrackManagement\Facade\Dto\TrackNamingDto;
 use App\TrackManagement\Facade\Dto\TrackSelectionDto;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 describe('ProjectManagementDomainService', function (): void {
     it('reuses existing categories instead of creating duplicates', function (): void {
@@ -31,7 +32,8 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectRepository(),
             $categoryRepository,
             new InMemoryProjectTrackAssignmentRepository(),
-            new TrackManagementFacadeStub(['track-1'])
+            new TrackManagementFacadeStub(['track-1']),
+            new EventDispatcher()
         );
 
         $project = $service->createProject(new CreateProjectInputDto('Spring Tape', 'ep'));
@@ -55,7 +57,8 @@ describe('ProjectManagementDomainService', function (): void {
             $projectRepository,
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Album', 'album')]),
             $assignmentRepository,
-            new TrackManagementFacadeStub(['track-1', 'track-2', 'track-3'])
+            new TrackManagementFacadeStub(['track-1', 'track-2', 'track-3']),
+            new EventDispatcher()
         );
 
         $service->reorderProjectTracks(
@@ -81,7 +84,8 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectTrackAssignmentRepository([
                 createAssignment('assignment-1', 'project-1', 'track-1', 1),
             ]),
-            new TrackManagementFacadeStub(['track-1'])
+            new TrackManagementFacadeStub(['track-1']),
+            new EventDispatcher()
         );
 
         $action = static fn () => $service->addTrackToProject(
@@ -96,7 +100,8 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1')]),
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
-            new TrackManagementFacadeStub([])
+            new TrackManagementFacadeStub([]),
+            new EventDispatcher()
         );
 
         $action = static fn () => $service->createProject(new CreateProjectInputDto('  spring   tape ', 'single'));
@@ -112,7 +117,8 @@ describe('ProjectManagementDomainService', function (): void {
             ]),
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
-            new TrackManagementFacadeStub([])
+            new TrackManagementFacadeStub([]),
+            new EventDispatcher()
         );
 
         $action = static fn () => $service->updateProject(new UpdateProjectInputDto('project-2', 'spring tape', 'single'));
@@ -125,7 +131,8 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectRepository(),
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
-            new TrackManagementFacadeStub([])
+            new TrackManagementFacadeStub([]),
+            new EventDispatcher()
         );
 
         $project = $service->createProject(
@@ -140,7 +147,8 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1')]),
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
-            new TrackManagementFacadeStub([])
+            new TrackManagementFacadeStub([]),
+            new EventDispatcher()
         );
 
         $publishedProject = $service->publishProject('project-1');
@@ -170,7 +178,8 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1', true)]),
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
-            new TrackManagementFacadeStub([])
+            new TrackManagementFacadeStub([]),
+            new EventDispatcher()
         );
 
         $publishAction   = static fn () => $service->publishProject('project-1');

@@ -47,6 +47,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
                 $item->cancelled,
                 $item->published,
                 $item->trackCount,
+                $this->urlGenerator->generate('activity_history.presentation.project_modal', ['projectUuid' => $item->uuid]),
                 $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $item->uuid]),
                 $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $item->uuid])
             ),

@@ -16,12 +16,22 @@ use App\ProjectManagement\Domain\Entity\Project;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Entity\ProjectTrackAssignment;
 use App\ProjectManagement\Domain\Support\ProjectCategoryCatalog;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectCancelledSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectCreatedSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectPublishedSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectReactivatedSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectTracksReorderedSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectUnpublishedSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectUpdatedSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\TrackAssignedToProjectSymfonyEvent;
+use App\ProjectManagement\Facade\SymfonyEvent\TrackRemovedFromProjectSymfonyEvent;
 use App\ProjectManagement\Infrastructure\Repository\ProjectCategoryRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectTrackAssignmentRepositoryInterface;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use ValueError;
 
 readonly class ProjectManagementDomainService implements ProjectManagementDomainServiceInterface
@@ -30,7 +40,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         private ProjectRepositoryInterface                $projectRepository,
         private ProjectCategoryRepositoryInterface        $projectCategoryRepository,
         private ProjectTrackAssignmentRepositoryInterface $projectTrackAssignmentRepository,
-        private TrackManagementFacadeInterface            $trackManagementFacade
+        private TrackManagementFacadeInterface            $trackManagementFacade,
+        private EventDispatcherInterface                  $eventDispatcher
     ) {
     }
 
@@ -44,6 +55,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
         $project->setCategoryUuid($this->resolveCategory($input->categoryName)->getUuid());
         $project->setArtists($this->normalizeArtists($input->artists));
+        $project->setCancelled(false);
         $project->setPublished(false);
         $project->setPublishedAt(null);
         $project->setCreatedAt($now);
@@ -51,6 +63,17 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
         $this->validateProject($project);
         $this->projectRepository->save($project);
+        $this->eventDispatcher->dispatch(
+            new ProjectCreatedSymfonyEvent(
+                $project->getUuid(),
+                [
+                    sprintf('Titel: %s', $project->getTitle()),
+                    sprintf('Kategorie: %s', $this->projectCategoryRepository->getByUuid($project->getCategoryUuid())->getName()),
+                    sprintf('Interpreten: %s', $this->formatArtists($project->getArtists())),
+                ],
+                $now
+            )
+        );
 
         return $project;
     }
@@ -59,6 +82,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
     {
         $project = $this->projectRepository->getByUuid($input->projectUuid);
         $this->assertProjectIsActive($project);
+        $before = $this->captureProjectSnapshot($project);
 
         $project->setTitle($this->normalizeTitle($input->title));
         $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
@@ -68,6 +92,16 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
         $this->validateProject($project);
         $this->projectRepository->save($project);
+        $changes = $this->buildProjectChangeDetails($before, $project);
+        if ($changes !== []) {
+            $this->eventDispatcher->dispatch(
+                new ProjectUpdatedSymfonyEvent(
+                    $project->getUuid(),
+                    $changes,
+                    $project->getUpdatedAt()
+                )
+            );
+        }
 
         return $project;
     }
@@ -89,6 +123,12 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setCancelled(true);
         $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
         $this->projectRepository->save($project);
+        $this->eventDispatcher->dispatch(
+            new ProjectCancelledSymfonyEvent(
+                $project->getUuid(),
+                $project->getUpdatedAt()
+            )
+        );
 
         return $project;
     }
@@ -104,6 +144,12 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setCancelled(false);
         $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
         $this->projectRepository->save($project);
+        $this->eventDispatcher->dispatch(
+            new ProjectReactivatedSymfonyEvent(
+                $project->getUuid(),
+                $project->getUpdatedAt()
+            )
+        );
 
         return $project;
     }
@@ -123,6 +169,12 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setPublishedAt($now);
         $project->setUpdatedAt($now);
         $this->projectRepository->save($project);
+        $this->eventDispatcher->dispatch(
+            new ProjectPublishedSymfonyEvent(
+                $project->getUuid(),
+                $now
+            )
+        );
 
         return $project;
     }
@@ -142,6 +194,12 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setPublishedAt(null);
         $project->setUpdatedAt($now);
         $this->projectRepository->save($project);
+        $this->eventDispatcher->dispatch(
+            new ProjectUnpublishedSymfonyEvent(
+                $project->getUuid(),
+                $now
+            )
+        );
 
         return $project;
     }
@@ -275,6 +333,14 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $this->projectTrackAssignmentRepository->save($assignment);
         $project->setUpdatedAt($now);
         $this->projectRepository->save($project);
+        $this->eventDispatcher->dispatch(
+            new TrackAssignedToProjectSymfonyEvent(
+                $input->projectUuid,
+                $input->trackUuid,
+                $assignment->getPosition(),
+                $now
+            )
+        );
 
         return $assignment;
     }
@@ -289,10 +355,19 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             return;
         }
 
+        $occurredAt = DateAndTimeService::getDateTimeImmutable();
+
         $this->projectTrackAssignmentRepository->remove($assignment);
         $this->resequenceAssignments($input->projectUuid);
-        $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+        $project->setUpdatedAt($occurredAt);
         $this->projectRepository->save($project);
+        $this->eventDispatcher->dispatch(
+            new TrackRemovedFromProjectSymfonyEvent(
+                $input->projectUuid,
+                $input->trackUuid,
+                $occurredAt
+            )
+        );
     }
 
     public function reorderProjectTracks(ReorderProjectTracksInputDto $input): void
@@ -315,6 +390,10 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             $assignmentsByTrackUuid[$assignment->getTrackUuid()] = $assignment;
         }
 
+        $beforeTrackOrder = array_map(
+            static fn (ProjectTrackAssignment $assignment): string => $assignment->getTrackUuid(),
+            $assignments
+        );
         $reorderedAssignments = [];
         foreach ($orderedTrackUuids as $index => $trackUuid) {
             $assignment = $assignmentsByTrackUuid[$trackUuid] ?? null;
@@ -328,9 +407,20 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             $reorderedAssignments[] = $assignment;
         }
 
+        $occurredAt = DateAndTimeService::getDateTimeImmutable();
+
         $this->projectTrackAssignmentRepository->saveMany($reorderedAssignments);
-        $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+        $project->setUpdatedAt($occurredAt);
         $this->projectRepository->save($project);
+        if ($beforeTrackOrder !== $orderedTrackUuids) {
+            $this->eventDispatcher->dispatch(
+                new ProjectTracksReorderedSymfonyEvent(
+                    $input->projectUuid,
+                    $orderedTrackUuids,
+                    $occurredAt
+                )
+            );
+        }
     }
 
     public function removeTrackFromAllProjects(string $trackUuid): void
@@ -345,14 +435,23 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             )
         );
 
+        $occurredAt = DateAndTimeService::getDateTimeImmutable();
+
         $this->projectTrackAssignmentRepository->removeAllByTrackUuid($trackUuid);
 
         foreach ($affectedProjectUuids as $projectUuid) {
             $this->resequenceAssignments($projectUuid);
 
             $project = $this->projectRepository->getByUuid($projectUuid);
-            $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
+            $project->setUpdatedAt($occurredAt);
             $this->projectRepository->save($project);
+            $this->eventDispatcher->dispatch(
+                new TrackRemovedFromProjectSymfonyEvent(
+                    $projectUuid,
+                    $trackUuid,
+                    $occurredAt
+                )
+            );
         }
     }
 
@@ -367,8 +466,17 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
                 continue;
             }
 
+            $occurredAt = DateAndTimeService::getDateTimeImmutable();
+
             $this->projectTrackAssignmentRepository->remove($assignment);
             $affectedProjectUuids[] = $assignment->getProjectUuid();
+            $this->eventDispatcher->dispatch(
+                new TrackRemovedFromProjectSymfonyEvent(
+                    $assignment->getProjectUuid(),
+                    $trackUuid,
+                    $occurredAt
+                )
+            );
         }
 
         foreach (array_values(array_unique($affectedProjectUuids)) as $projectUuid) {
@@ -490,6 +598,73 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         }
 
         return $normalizedArtists;
+    }
+
+    /**
+     * @return array{
+     *     title: string,
+     *     categoryName: string,
+     *     artists: string
+     * }
+     */
+    private function captureProjectSnapshot(Project $project): array
+    {
+        return [
+            'title'        => $project->getTitle(),
+            'categoryName' => $this->projectCategoryRepository->getByUuid($project->getCategoryUuid())->getName(),
+            'artists'      => $this->formatArtists($project->getArtists()),
+        ];
+    }
+
+    /**
+     * @param array{
+     *     title: string,
+     *     categoryName: string,
+     *     artists: string
+     * } $before
+     *
+     * @return list<string>
+     */
+    private function buildProjectChangeDetails(array $before, Project $project): array
+    {
+        $after = $this->captureProjectSnapshot($project);
+
+        $labels = [
+            'title'        => 'Titel',
+            'categoryName' => 'Kategorie',
+            'artists'      => 'Interpreten',
+        ];
+
+        $changes = [];
+        foreach ($labels as $field => $label) {
+            if ($before[$field] === $after[$field]) {
+                continue;
+            }
+
+            $changes[] = sprintf(
+                '%s: %s -> %s',
+                $label,
+                $this->normalizeHistoryValue($before[$field]),
+                $this->normalizeHistoryValue($after[$field])
+            );
+        }
+
+        return $changes;
+    }
+
+    /**
+     * @param list<string> $artists
+     */
+    private function formatArtists(array $artists): string
+    {
+        return $artists === [] ? '—' : implode(', ', $artists);
+    }
+
+    private function normalizeHistoryValue(string $value): string
+    {
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? '—' : $trimmed;
     }
 
     private function resequenceAssignments(string $projectUuid): void

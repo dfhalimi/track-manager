@@ -3,6 +3,7 @@ import { startStimulusApp } from "@symfony/stimulus-bundle";
 // @ts-expect-error "@enterprise-tooling-for-symfony/webui is JS code without a types definition"
 import { webuiBootstrap } from "@enterprise-tooling-for-symfony/webui";
 import LiveSearchController from "./controllers/live_search_controller.ts";
+import ActivityHistoryModalController from "../src/ActivityHistory/Presentation/Resources/assets/controllers/activity_history_modal_controller.ts";
 import FileUploadController from "../src/FileImport/Presentation/Resources/assets/controllers/file_upload_controller.ts";
 import ProjectTrackPickerController from "../src/ProjectManagement/Presentation/Resources/assets/controllers/project_track_picker_controller.ts";
 import ProjectTrackReorderController from "../src/ProjectManagement/Presentation/Resources/assets/controllers/project_track_reorder_controller.ts";
@@ -16,6 +17,7 @@ const app = startStimulusApp();
 // register any custom, 3rd party controllers here
 // app.register('some_controller_name', SomeImportedController);
 app.register("live-search", LiveSearchController);
+app.register("activity-history-modal", ActivityHistoryModalController);
 app.register("file-upload", FileUploadController);
 app.register("project-track-picker", ProjectTrackPickerController);
 app.register("project-track-reorder", ProjectTrackReorderController);

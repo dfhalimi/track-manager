@@ -26,6 +26,7 @@ readonly class TrackListItemViewDto
         public bool              $hasCurrentFile,
         public string            $uploadUrl,
         public ?TrackFileViewDto $trackFile,
+        public string            $historyUrl,
         public string            $showUrl,
         public string            $editUrl,
         public string            $deleteUrl

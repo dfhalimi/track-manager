@@ -2,6 +2,7 @@ twig:
     file_name_pattern: "*.twig"
 
     paths:
+        "src/ActivityHistory/Presentation/Resources/templates": "activityhistory.presentation"
         "src/Account/Presentation/Resources/templates": "account.presentation"
         "src/Common/Presentation/Resources/templates": "common.presentation"
         "src/Content/Presentation/Resources/templates": "content.presentation"

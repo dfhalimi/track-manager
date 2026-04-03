@@ -20,6 +20,7 @@ use App\TrackManagement\Domain\Service\TrackNamingDomainServiceInterface;
 use App\TrackManagement\Domain\Service\TrackStatusResolverInterface;
 use App\TrackManagement\Infrastructure\Repository\TrackRepositoryInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 describe('TrackManagementDomainService', function (): void {
     it('derives published flag from at least one active published project', function (): void {
@@ -40,7 +41,8 @@ describe('TrackManagementDomainService', function (): void {
             new PublishedTrackInMemoryProjectRepository([
                 createPublishedTestProject('project-1', true, true),
                 createPublishedTestProject('project-2', false, true),
-            ])
+            ]),
+            new EventDispatcher()
         );
 
         $result = $service->getAllTracks(new TrackListFilterDto('', '', '', 'trackNumber', 'ASC', 1, 50));

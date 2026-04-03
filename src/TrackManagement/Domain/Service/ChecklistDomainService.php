@@ -10,15 +10,20 @@ use App\TrackManagement\Domain\Dto\RenameChecklistItemInputDto;
 use App\TrackManagement\Domain\Dto\ReorderChecklistItemsInputDto;
 use App\TrackManagement\Domain\Dto\ToggleChecklistItemInputDto;
 use App\TrackManagement\Domain\Entity\ChecklistItem;
+use App\TrackManagement\Domain\Enum\TrackStatus;
+use App\TrackManagement\Facade\SymfonyEvent\TrackStatusChangedSymfonyEvent;
 use App\TrackManagement\Infrastructure\Repository\ChecklistItemRepositoryInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Uid\Uuid;
 use ValueError;
 
 readonly class ChecklistDomainService implements ChecklistDomainServiceInterface
 {
     public function __construct(
-        private ChecklistItemRepositoryInterface $checklistItemRepository
+        private ChecklistItemRepositoryInterface $checklistItemRepository,
+        private TrackStatusResolverInterface     $trackStatusResolver,
+        private EventDispatcherInterface         $eventDispatcher
     ) {
     }
 
@@ -40,7 +45,8 @@ readonly class ChecklistDomainService implements ChecklistDomainServiceInterface
 
     public function addChecklistItem(AddChecklistItemInputDto $input): ChecklistItem
     {
-        $label = trim($input->label);
+        $previousStatus = $this->resolveTrackStatus($input->trackUuid);
+        $label          = trim($input->label);
         if ($label === '') {
             throw new ValueError('Checklist label must not be empty.');
         }
@@ -55,6 +61,7 @@ readonly class ChecklistDomainService implements ChecklistDomainServiceInterface
         $item->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
 
         $this->checklistItemRepository->save($item);
+        $this->dispatchTrackStatusChangedIfNeeded($input->trackUuid, $previousStatus);
 
         return $item;
     }
@@ -76,11 +83,13 @@ readonly class ChecklistDomainService implements ChecklistDomainServiceInterface
 
     public function toggleChecklistItem(ToggleChecklistItemInputDto $input): void
     {
-        $item = $this->requireTrackItem($input->trackUuid, $input->itemUuid);
+        $previousStatus = $this->resolveTrackStatus($input->trackUuid);
+        $item           = $this->requireTrackItem($input->trackUuid, $input->itemUuid);
         $item->setIsCompleted($input->isCompleted);
         $item->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
 
         $this->checklistItemRepository->save($item);
+        $this->dispatchTrackStatusChangedIfNeeded($input->trackUuid, $previousStatus);
     }
 
     public function reorderChecklistItems(ReorderChecklistItemsInputDto $input): void
@@ -121,12 +130,14 @@ readonly class ChecklistDomainService implements ChecklistDomainServiceInterface
 
     public function removeChecklistItem(RemoveChecklistItemInputDto $input): void
     {
+        $previousStatus = $this->resolveTrackStatus($input->trackUuid);
         if ($this->checklistItemRepository->countByTrackUuid($input->trackUuid) <= 1) {
             throw new ValueError('A track checklist must contain at least one item.');
         }
 
         $item = $this->requireTrackItem($input->trackUuid, $input->itemUuid);
         $this->checklistItemRepository->remove($item);
+        $this->dispatchTrackStatusChangedIfNeeded($input->trackUuid, $previousStatus);
     }
 
     public function getChecklistItemsByTrackUuid(string $trackUuid): array
@@ -148,5 +159,29 @@ readonly class ChecklistDomainService implements ChecklistDomainServiceInterface
         }
 
         return $item;
+    }
+
+    private function resolveTrackStatus(string $trackUuid): TrackStatus
+    {
+        return $this->trackStatusResolver->resolveStatus($this->checklistItemRepository->findByTrackUuid($trackUuid));
+    }
+
+    private function dispatchTrackStatusChangedIfNeeded(
+        string      $trackUuid,
+        TrackStatus $previousStatus
+    ): void {
+        $currentStatus = $this->resolveTrackStatus($trackUuid);
+        if ($previousStatus === $currentStatus) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(
+            new TrackStatusChangedSymfonyEvent(
+                $trackUuid,
+                $previousStatus,
+                $currentStatus,
+                DateAndTimeService::getDateTimeImmutable()
+            )
+        );
     }
 }

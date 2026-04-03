@@ -15,6 +15,7 @@
                 <p class="text-sm text-slate-600">Veröffentlicht am {{ view.publishedAt ?: '—' }}</p>
             </div>
             <div class="flex gap-3">
+                {% include '@activityhistory.presentation/_modal_trigger.html.twig' with { historyUrl: view.historyUrl, buttonTitle: 'Historie anzeigen', buttonLabel: 'Historie', variant: 'button' } only %}
                 {% if not view.cancelled %}
                     {% if view.published %}
                         <form method="post" action="{{ view.unpublishUrl }}">

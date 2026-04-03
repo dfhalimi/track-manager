@@ -17,6 +17,7 @@ readonly class ProjectListItemViewDto
         public bool   $cancelled,
         public bool   $published,
         public int    $trackCount,
+        public string $historyUrl,
         public string $showUrl,
         public string $editUrl
     ) {

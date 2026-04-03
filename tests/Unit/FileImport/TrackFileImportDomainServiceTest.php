@@ -15,6 +15,7 @@ use App\TrackManagement\Facade\Dto\TrackNamingDto;
 use App\TrackManagement\Facade\Dto\TrackSelectionDto;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 describe('TrackFileImportDomainService', function (): void {
@@ -23,7 +24,8 @@ describe('TrackFileImportDomainService', function (): void {
         $service = new TrackFileImportDomainService(
             new InMemoryTrackFileRepository(),
             $storage,
-            new ExistingTrackManagementFacadeStub(['track-1'])
+            new ExistingTrackManagementFacadeStub(['track-1']),
+            new EventDispatcher()
         );
 
         $uploadedFile = createUploadedAudioFile(
@@ -44,7 +46,8 @@ describe('TrackFileImportDomainService', function (): void {
         $service = new TrackFileImportDomainService(
             new InMemoryTrackFileRepository(),
             new RecordingTrackFileStorage(),
-            new ExistingTrackManagementFacadeStub(['track-1'])
+            new ExistingTrackManagementFacadeStub(['track-1']),
+            new EventDispatcher()
         );
 
         $action = static fn () => $service->uploadTrackFile(
@@ -57,7 +60,8 @@ describe('TrackFileImportDomainService', function (): void {
         $service = new TrackFileImportDomainService(
             new InMemoryTrackFileRepository(),
             new RecordingTrackFileStorage(),
-            new ExistingTrackManagementFacadeStub(['track-1'])
+            new ExistingTrackManagementFacadeStub(['track-1']),
+            new EventDispatcher()
         );
 
         $action = static fn () => $service->uploadTrackFile(

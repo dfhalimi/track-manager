@@ -101,6 +101,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
                 $this->urlGenerator->generate('media_asset_management.presentation.export', ['projectUuid' => $projectUuid, 'format' => 'jpg']),
                 $this->urlGenerator->generate('media_asset_management.presentation.export', ['projectUuid' => $projectUuid, 'format' => 'png'])
             ),
+            $this->urlGenerator->generate('activity_history.presentation.project_modal', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.index'),
             $this->urlGenerator->generate('track_management.presentation.index'),
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),

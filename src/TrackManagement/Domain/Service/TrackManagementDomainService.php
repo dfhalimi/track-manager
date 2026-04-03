@@ -14,9 +14,14 @@ use App\TrackManagement\Domain\Dto\TrackNamingInputDto;
 use App\TrackManagement\Domain\Dto\UpdateTrackInputDto;
 use App\TrackManagement\Domain\Entity\Track;
 use App\TrackManagement\Domain\Support\MusicalKeyCatalog;
+use App\TrackManagement\Facade\SymfonyEvent\TrackCancelledSymfonyEvent;
+use App\TrackManagement\Facade\SymfonyEvent\TrackCreatedSymfonyEvent;
+use App\TrackManagement\Facade\SymfonyEvent\TrackReactivatedSymfonyEvent;
+use App\TrackManagement\Facade\SymfonyEvent\TrackUpdatedSymfonyEvent;
 use App\TrackManagement\Infrastructure\Repository\TrackRepositoryInterface;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use ValueError;
 
 use function abs;
@@ -30,7 +35,8 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         private ProgressCalculatorInterface               $progressCalculator,
         private TrackStatusResolverInterface              $trackStatusResolver,
         private ProjectTrackAssignmentRepositoryInterface $projectTrackAssignmentRepository,
-        private ProjectRepositoryInterface                $projectRepository
+        private ProjectRepositoryInterface                $projectRepository,
+        private EventDispatcherInterface                  $eventDispatcher
     ) {
     }
 
@@ -54,6 +60,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $track->setPublishingName($this->normalizeNullableString($input->publishingName));
         $track->setNotes($this->normalizeNullableString($input->notes));
         $track->setIsrc($this->normalizeNullableString($input->isrc));
+        $track->setCancelled(false);
         $track->setCreatedAt($now);
         $track->setUpdatedAt($now);
 
@@ -61,6 +68,18 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
 
         $this->trackRepository->save($track);
         $this->checklistDomainService->createDefaultChecklistForTrack($track->getUuid());
+        $this->eventDispatcher->dispatch(
+            new TrackCreatedSymfonyEvent(
+                $track->getUuid(),
+                [
+                    sprintf('Beat Name: %s', $track->getBeatName()),
+                    sprintf('Title: %s', $track->getTitle()),
+                    sprintf('BPM: %s', $this->formatBpms($track->getBpms())),
+                    sprintf('Key: %s', $this->formatMusicalKeys($track->getMusicalKeys())),
+                ],
+                $now
+            )
+        );
 
         return $track;
     }
@@ -69,6 +88,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
     {
         $track = $this->trackRepository->getByUuid($input->trackUuid);
         $this->assertTrackIsActive($track);
+        $before = $this->captureTrackSnapshot($track);
 
         $track->setBeatName(trim($input->beatName));
         $track->setBpms($this->normalizeBpms($input->bpms));
@@ -93,6 +113,16 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $this->validateTrack($track);
 
         $this->trackRepository->save($track);
+        $changes = $this->buildTrackChangeDetails($before, $track);
+        if ($changes !== []) {
+            $this->eventDispatcher->dispatch(
+                new TrackUpdatedSymfonyEvent(
+                    $track->getUuid(),
+                    $changes,
+                    $track->getUpdatedAt()
+                )
+            );
+        }
 
         return $track;
     }
@@ -114,6 +144,12 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $track->setCancelled(true);
         $track->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
         $this->trackRepository->save($track);
+        $this->eventDispatcher->dispatch(
+            new TrackCancelledSymfonyEvent(
+                $track->getUuid(),
+                $track->getUpdatedAt()
+            )
+        );
 
         return $track;
     }
@@ -129,6 +165,12 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         $track->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
         $this->trackRepository->save($track);
         $this->validateTrack($track);
+        $this->eventDispatcher->dispatch(
+            new TrackReactivatedSymfonyEvent(
+                $track->getUuid(),
+                $track->getUpdatedAt()
+            )
+        );
 
         return $track;
     }
@@ -413,5 +455,104 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
         }
 
         return false;
+    }
+
+    /**
+     * @return array{
+     *     beatName: string,
+     *     title: string,
+     *     publishingName: ?string,
+     *     bpms: string,
+     *     musicalKeys: string,
+     *     notes: ?string,
+     *     isrc: ?string
+     * }
+     */
+    private function captureTrackSnapshot(Track $track): array
+    {
+        return [
+            'beatName'       => $track->getBeatName(),
+            'title'          => $track->getTitle(),
+            'publishingName' => $track->getPublishingName(),
+            'bpms'           => $this->formatBpms($track->getBpms()),
+            'musicalKeys'    => $this->formatMusicalKeys($track->getMusicalKeys()),
+            'notes'          => $track->getNotes(),
+            'isrc'           => $track->getIsrc(),
+        ];
+    }
+
+    /**
+     * @param array{
+     *     beatName: string,
+     *     title: string,
+     *     publishingName: ?string,
+     *     bpms: string,
+     *     musicalKeys: string,
+     *     notes: ?string,
+     *     isrc: ?string
+     * } $before
+     *
+     * @return list<string>
+     */
+    private function buildTrackChangeDetails(array $before, Track $track): array
+    {
+        $changes = [];
+        $after   = $this->captureTrackSnapshot($track);
+
+        $labels = [
+            'beatName'       => 'Beat Name',
+            'title'          => 'Title',
+            'publishingName' => 'Publishing Name',
+            'bpms'           => 'BPM',
+            'musicalKeys'    => 'Key',
+            'notes'          => 'Notizen',
+            'isrc'           => 'ISRC',
+        ];
+
+        foreach ($labels as $field => $label) {
+            if ($before[$field] === $after[$field]) {
+                continue;
+            }
+
+            $changes[] = sprintf(
+                '%s: %s -> %s',
+                $label,
+                $this->normalizeHistoryValue($before[$field]),
+                $this->normalizeHistoryValue($after[$field])
+            );
+        }
+
+        return $changes;
+    }
+
+    /**
+     * @param list<float> $bpms
+     */
+    private function formatBpms(array $bpms): string
+    {
+        return implode(', ', array_map(fn (float $bpm): string => $this->formatBpm($bpm), $bpms));
+    }
+
+    /**
+     * @param list<string> $musicalKeys
+     */
+    private function formatMusicalKeys(array $musicalKeys): string
+    {
+        return implode(', ', $musicalKeys);
+    }
+
+    private function normalizeHistoryValue(?string $value): string
+    {
+        $trimmed = trim((string) $value);
+
+        return $trimmed === '' ? '—' : $trimmed;
+    }
+
+    private function formatBpm(float $bpm): string
+    {
+        $formattedBpm = number_format($bpm, 3, '.', '');
+        $formattedBpm = rtrim($formattedBpm, '0');
+
+        return rtrim($formattedBpm, '.');
     }
 }

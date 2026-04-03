@@ -13,6 +13,7 @@
                 <p class="text-sm text-slate-600">{{ view.beatName }} · {{ view.bpmLabel }} BPM · {{ view.musicalKeyLabel }}</p>
             </div>
             <div class="flex gap-3">
+                {% include '@activityhistory.presentation/_modal_trigger.html.twig' with { historyUrl: view.historyUrl, buttonTitle: 'Historie anzeigen', buttonLabel: 'Historie', variant: 'button' } only %}
                 {% if not view.cancelled %}
                     <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
                     <form method="post" action="{{ view.cancelUrl }}">
