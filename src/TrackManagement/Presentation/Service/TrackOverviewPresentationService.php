@@ -6,12 +6,14 @@ namespace App\TrackManagement\Presentation\Service;
 
 use App\Common\Presentation\Dto\PaginationLinkViewDto;
 use App\FileImport\Facade\FileImportFacadeInterface;
+use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\TrackManagement\Domain\Dto\TrackListFilterDto;
 use App\TrackManagement\Domain\Enum\TrackStatus;
 use App\TrackManagement\Domain\Service\TrackManagementDomainServiceInterface;
 use App\TrackManagement\Presentation\Dto\TrackFileViewDto;
 use App\TrackManagement\Presentation\Dto\TrackListItemViewDto;
 use App\TrackManagement\Presentation\Dto\TrackListViewDto;
+use App\TrackManagement\Presentation\Dto\TrackProjectBadgeViewDto;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 readonly class TrackOverviewPresentationService implements TrackOverviewPresentationServiceInterface
@@ -23,6 +25,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
 
     public function __construct(
         private TrackManagementDomainServiceInterface $trackManagementDomainService,
+        private ProjectManagementFacadeInterface      $projectManagementFacade,
         private FileImportFacadeInterface             $fileImportFacade,
         private UrlGeneratorInterface                 $urlGenerator
     ) {
@@ -42,14 +45,16 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
 
         $items = [];
         foreach ($result->items as $item) {
-            $status    = TrackStatus::from($item->status);
-            $trackFile = $this->fileImportFacade->getCurrentTrackFileByTrackUuid($item->uuid);
-            $items[]   = new TrackListItemViewDto(
+            $status        = TrackStatus::from($item->status);
+            $trackFile     = $this->fileImportFacade->getCurrentTrackFileByTrackUuid($item->uuid);
+            $projectBadges = $this->buildProjectBadges($item->uuid);
+            $items[]       = new TrackListItemViewDto(
                 $item->uuid,
                 $item->trackNumber,
                 $item->beatName,
                 $item->title,
                 $item->publishingName,
+                $projectBadges,
                 $this->formatBpms($item->bpms),
                 $this->formatMusicalKeys($item->musicalKeys),
                 $status->getLabel(),
@@ -191,5 +196,31 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
         $formattedBpm = rtrim($formattedBpm, '0');
 
         return rtrim($formattedBpm, '.');
+    }
+
+    /**
+     * @return list<TrackProjectBadgeViewDto>
+     */
+    private function buildProjectBadges(string $trackUuid): array
+    {
+        $publishedBadges   = [];
+        $unpublishedBadges = [];
+
+        foreach ($this->projectManagementFacade->getProjectsByTrackUuid($trackUuid) as $membership) {
+            $badge = new TrackProjectBadgeViewDto(
+                $membership->projectTitle,
+                $membership->published
+            );
+
+            if ($membership->published) {
+                $publishedBadges[] = $badge;
+
+                continue;
+            }
+
+            $unpublishedBadges[] = $badge;
+        }
+
+        return [...$publishedBadges, ...$unpublishedBadges];
     }
 }

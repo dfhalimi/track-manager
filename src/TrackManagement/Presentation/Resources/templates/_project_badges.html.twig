@@ -1,0 +1,26 @@
+{% set visibleProjectBadges = item.projectBadges|slice(0, 3) %}
+{% set hiddenProjectBadgeCount = item.projectBadges|length - visibleProjectBadges|length %}
+
+{% if visibleProjectBadges is not empty %}
+    <div class="mt-1 flex flex-wrap gap-1 {{ wrapperClass|default('') }}">
+        {% for badge in visibleProjectBadges %}
+            <span
+                class="inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-[10px] font-medium {{ badge.published ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-700' }}"
+                title="{{ badge.title }}"
+            >
+                <span>{{ badge.title|length > 20 ? "#{badge.title|slice(0, 20)}..." : badge.title }}</span>
+            </span>
+        {% endfor %}
+
+        {% if hiddenProjectBadgeCount > 0 %}
+            <a
+                href="{{ item.showUrl }}"
+                class="inline-flex items-center rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                title="{{ hiddenProjectBadgeCount }} weitere Projekte in der Detailansicht anzeigen"
+                aria-label="{{ hiddenProjectBadgeCount }} weitere Projekte in der Detailansicht anzeigen"
+            >
+                +{{ hiddenProjectBadgeCount }}
+            </a>
+        {% endif %}
+    </div>
+{% endif %}

@@ -6,11 +6,13 @@ Die Anwendung ist ein Symfony-basierter Monolith im ETFS-Stil mit servergerender
 
 Der aktuelle Fokus liegt auf:
 
-- Track-CRUD
+- Track-Erstellung, -Bearbeitung, -Archivierung und -Reaktivierung
 - Checklisten-Logik und Fortschrittsableitung
 - Upload, Wiedergabe und Export einer aktuellen Audiodatei pro Track
-- Projekt-CRUD
+- Projekt-Erstellung, -Bearbeitung, -Archivierung und -Reaktivierung
 - Projekt-Kategorien und Track-Zuordnungen
+- Projekt-Veröffentlichung mit `published`/`published_at`
+- Freitextsuche und Pagination in Track- und Projektlisten
 - Projektbilder mit Preview und Export
 
 ## 2. Verwendeter Stack
@@ -69,11 +71,12 @@ Wichtige Regel:
 
 Verantwortung:
 
-- Tracks erstellen, bearbeiten, löschen
+- Tracks erstellen, bearbeiten, archivieren und reaktivieren
 - Trackliste, Filter, Sortierung
 - Checklistenlogik
 - Fortschritt und Status
 - Title-Vorschlagslogik
+- Ableitung eines Published-Status aus aktiven Projekt-Zuordnungen
 - Darstellung von Projekt-Zuordnungen in der Track-Detailansicht
 
 ### 4.2 `FileImport`
@@ -97,10 +100,12 @@ Verantwortung:
 
 Verantwortung:
 
-- Projekte erstellen, bearbeiten, löschen
+- Projekte erstellen, bearbeiten, archivieren und reaktivieren
 - Projekt-Kategorien verwalten bzw. wiederverwenden
+- optionale Künstler/Interpreten pflegen
 - Tracks Projekten zuordnen
 - Reihenfolge der Tracks innerhalb eines Projekts pflegen
+- Veröffentlichung und Rücknahme der Veröffentlichung
 - Projektliste und Projekt-Detailansicht
 
 ### 4.5 `MediaAssetManagement`
@@ -138,8 +143,9 @@ Wichtige Felder:
 - `beat_name`
 - `title`
 - `publishing_name`
-- `bpms` (JSON-Liste)
-- `musical_key`
+- `bpms` (JSON-Liste mit `float`)
+- `musical_keys` (JSON-Liste)
+- `cancelled`
 - `notes`
 - `isrc`
 - `created_at`
@@ -183,6 +189,11 @@ Nebenbedingung:
 - `uuid`
 - `title`
 - `category_uuid`
+- `normalized_title`
+- `artists` (JSON-Liste)
+- `cancelled`
+- `published`
+- `published_at`
 - `created_at`
 - `updated_at`
 
@@ -247,7 +258,7 @@ Projektbilder sind beim Erstellen optional und können später ergänzt werden.
 - `beatName` darf nicht leer sein
 - `title` darf nicht leer sein
 - `bpms` muss mindestens einen positiven Wert enthalten
-- `musicalKey` muss aus der unterstützten Liste stammen
+- `musicalKeys` muss mindestens einen gültigen Eintrag aus der unterstützten Liste enthalten
 - `isrc` ist optional
 
 ### Checkliste
@@ -259,7 +270,9 @@ Projektbilder sind beim Erstellen optional und können später ergänzt werden.
 
 - `title` darf nicht leer sein
 - `category` darf nicht leer sein
+- `artists` ist optional und wird als String-Liste gespeichert
 - Track darf innerhalb desselben Projekts nur einmal vorkommen
+- archivierte Projekte dürfen nicht veröffentlicht oder ent-veröffentlicht werden
 
 ### Medien
 
@@ -274,6 +287,7 @@ Folgende Werte werden nicht manuell redundant gepflegt:
 - `status`
 - vorgeschlagener Track-Titel
 - Export-Dateiname
+- Published-Status eines Tracks aus aktiven veröffentlichten Projekten
 
 ## 10. UI-Interaktionen
 
@@ -283,6 +297,7 @@ Gezielte Interaktionen laufen über `Stimulus`:
 - Reordering von Checklisten
 - Reordering von Tracks innerhalb eines Projekts
 - Datei-Upload-Buttons
+- Freitextsuche für Track-Zuordnung in Projekten
 
 ## 11. Audio-Export
 
@@ -306,10 +321,10 @@ Aktuelle Umsetzung:
 
 Aktuell wichtige Oberflächen:
 
-- Trackliste
+- Trackliste mit Suche, Filtern und Pagination
 - Track-Formular
 - Track-Detailansicht
-- Projektliste
+- Projektliste mit Suche, Filtern und Pagination
 - Projekt-Formular
 - Projekt-Detailansicht
 

@@ -34,12 +34,15 @@ Ein Track besitzt fachlich:
   - optionaler finaler Veröffentlichungsname
 - `bpms`
   - Liste aus einem oder mehreren BPM-Werten
-- `musicalKey`
-  - musikalische Tonart aus einer unterstützten Auswahlliste
+  - Dezimalwerte sind erlaubt
+- `musicalKeys`
+  - Liste aus einer oder mehreren musikalischen Tonarten aus der unterstützten Auswahlliste
 - `notes`
   - optionaler Freitext
 - `isrc`
   - optionale ISRC-Nummer
+- `cancelled`
+  - technischer Status für fachlich archivierte Tracks
 - `createdAt`
 - `updatedAt`
 
@@ -81,6 +84,12 @@ Ein Projekt besitzt:
 - `uuid`
 - `title`
 - `categoryUuid`
+- `artists`
+  - optionale Liste von Interpreten
+- `cancelled`
+  - technischer Status für fachlich archivierte Projekte
+- `published`
+- `publishedAt`
 - `createdAt`
 - `updatedAt`
 
@@ -151,6 +160,7 @@ Beim Anlegen eines Tracks gelten folgende Regeln:
 - Ein Track darf ohne Audiodatei existieren.
 - Ein Track darf ohne `publishingName`, `notes` und `isrc` existieren.
 - `bpms` muss mindestens einen positiven Wert enthalten.
+- `musicalKeys` muss mindestens einen gültigen Eintrag enthalten.
 
 ## 4. Title-Logik
 
@@ -166,10 +176,10 @@ Regeln:
 
 - `title` wird beim Erstellen automatisch vorgeschlagen.
 - Der Benutzer darf ihn frei überschreiben.
-- BPM-Werte werden als `120BPM` formatiert.
+- BPM-Werte werden ohne unnötige Nachkommastellen als `120BPM` oder `120.5BPM` formatiert.
 - Mehrere BPM-Werte werden in derselben Reihenfolge eingebaut.
-- `musicalKey` wird auf ein kanonisches Format normalisiert.
-- Wenn sich `beatName`, `bpms` oder `musicalKey` später ändern, fragt die Anwendung, ob der Titel angepasst werden soll.
+- `musicalKeys` werden auf ein kanonisches Format normalisiert.
+- Wenn sich `beatName`, `bpms` oder `musicalKeys` später ändern, fragt die Anwendung, ob der Titel angepasst werden soll.
 
 ## 5. Checklistenlogik
 
@@ -240,6 +250,7 @@ Regeln:
 
 - Ein Projekt hat genau einen Titel.
 - Ein Projekt hat genau eine Kategorie.
+- Ein Projekt kann null, einen oder mehrere Interpreten besitzen.
 - Ein Projekt kann null, einen oder mehrere Tracks enthalten.
 - Ein Track kann in null, einem oder mehreren Projekten enthalten sein.
 
@@ -248,13 +259,33 @@ Regeln:
 - Ein Track darf innerhalb desselben Projekts nur einmal vorkommen.
 - Die Track-Reihenfolge innerhalb eines Projekts ist fachlich relevant.
 - Die Reihenfolge wird an der Beziehung `ProjectTrackAssignment` gespeichert, nicht am Track selbst.
+- Die Track-Auswahl in der Projekt-Detailansicht erfolgt über eine Freitextsuche auf `title` und `publishingName`.
+- Treffer werden in der Vorschlagsliste nicht doppelt angezeigt.
 
 ### 9.3 Kategorien
 
 - Kategorien sind wiederverwendbar.
 - Standardkategorien sind vorhanden.
 - Neue Kategorien können inline beim Anlegen/Bearbeiten eines Projekts entstehen.
-- Projekte können nach Kategorie gefiltert werden.
+- Projekte können nach Kategorie und Archivierungsstatus gefiltert werden.
+
+### 9.4 Archivierung
+
+- Tracks und Projekte werden fachlich archiviert statt hart gelöscht.
+- Archivierte Tracks und Projekte bleiben sichtbar, werden in Übersichten aber visuell zurückgenommen dargestellt.
+- Archivierte Tracks können nicht bearbeitet werden und erhalten keine Audio-Uploads oder Dateiersetzungen.
+- Archivierte Projekte können nicht bearbeitet werden.
+- Archivierte Tracks werden aus aktiven Projekten entfernt.
+- Archivierte Projekte behalten ihre Track-Zuordnungen technisch bei, blenden diese aber in relevanten Übersichten nicht mehr als aktive Zugehörigkeit ein.
+- Sowohl Tracks als auch Projekte können über die Detailansicht wieder reaktiviert werden.
+
+### 9.5 Veröffentlichung
+
+- Nur Projekte können veröffentlicht werden.
+- Die Veröffentlichung wird über `published` und `publishedAt` abgebildet.
+- Ein veröffentlichtes Projekt kann auch wieder ent-veröffentlicht werden.
+- Archivierte Projekte dürfen weder veröffentlicht noch ent-veröffentlicht werden.
+- Für Tracks ist der Published-Status rein abgeleitet: Ein Track gilt als veröffentlicht, wenn er zu mindestens einem aktiven veröffentlichten Projekt gehört.
 
 ## 10. Projektbilder
 
@@ -287,19 +318,21 @@ Aktueller Scope:
 
 ### Tracks
 
-- Suche nach TrackNumber, Beat Name oder Title
+- Suche nach TrackNumber, Beat Name, Title oder Publishing Name
 - Filter nach Status
+- Filter nach Archivierungsstatus
 - Sortierung nach letzter Änderung, TrackNumber, Erstellung, Progress, Status
 
 ### Projekte
 
-- Suche nach Titel oder Kategorie
-- Filter nach Kategorie
+- Suche nach Titel, Künstlern oder Kategorie
+- Filter nach Kategorie und Archivierungsstatus
 - Sortierung nach letzter Änderung, Titel oder Track-Anzahl
 
 ## 12. Cross-Object-Sichtbarkeit
 
 - In der Track-Detailansicht ist sichtbar, in welchen Projekten ein Track enthalten ist.
+- In der Track-Detailansicht ist zusätzlich sichtbar, welche dieser Projekte veröffentlicht sind.
 - In der Projekt-Detailansicht sind die zugeordneten Tracks mit Reihenfolge sichtbar.
 
 ## 13. Aktueller MVP-Scope
@@ -312,6 +345,7 @@ Das MVP unterstützt aktuell fachlich:
 - Audio-Export
 - Projekt-Verwaltung
 - Projekt-Kategorien
+- Projekt-Veröffentlichung
 - Track-Zuordnungen zu Projekten
 - Reordering von Projekt-Tracklisten
 - Projektbild-Management
