@@ -32,6 +32,7 @@ readonly class TrackListViewDto
         public string  $currentUrl,
         public string  $listUrl,
         public string  $suggestionsUrl,
+        public string  $exportUrl,
         public string  $createUrl
     ) {
     }

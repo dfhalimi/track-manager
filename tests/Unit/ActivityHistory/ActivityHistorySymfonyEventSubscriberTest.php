@@ -7,6 +7,7 @@ use App\ActivityHistory\Domain\Service\ActivityHistoryDomainServiceInterface;
 use App\ActivityHistory\Domain\SymfonyEventSubscriber\ActivityHistorySymfonyEventSubscriber;
 use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Facade\Dto\ProjectDto;
+use App\ProjectManagement\Facade\Dto\ProjectListFilterInputDto;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\ProjectManagement\Facade\SymfonyEvent\ProjectPublishedSymfonyEvent;
 use App\ProjectManagement\Facade\SymfonyEvent\TrackAssignedToProjectSymfonyEvent;
@@ -14,6 +15,7 @@ use App\TrackManagement\Domain\Enum\TrackStatus;
 use App\TrackManagement\Facade\Dto\TrackChecklistDto;
 use App\TrackManagement\Facade\Dto\TrackDto;
 use App\TrackManagement\Facade\Dto\TrackExportDataDto;
+use App\TrackManagement\Facade\Dto\TrackListFilterInputDto;
 use App\TrackManagement\Facade\Dto\TrackNamingDto;
 use App\TrackManagement\Facade\SymfonyEvent\TrackStatusChangedSymfonyEvent;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
@@ -173,6 +175,11 @@ final readonly class ActivityHistoryTrackManagementFacadeStub implements TrackMa
         throw new BadMethodCallException();
     }
 
+    public function getTracksByFilter(TrackListFilterInputDto $filter): array
+    {
+        throw new BadMethodCallException();
+    }
+
     public function getAllTracksForSelection(): array
     {
         throw new BadMethodCallException();
@@ -202,6 +209,11 @@ final readonly class ActivityHistoryProjectManagementFacadeStub implements Proje
     }
 
     public function getAllProjectCategories(): array
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getProjectsByFilter(ProjectListFilterInputDto $filter): array
     {
         throw new BadMethodCallException();
     }

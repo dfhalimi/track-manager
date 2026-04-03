@@ -78,6 +78,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
             $this->urlGenerator->generate('project_management.presentation.index'),
             $this->urlGenerator->generate('project_management.presentation.list'),
             $this->urlGenerator->generate('project_management.presentation.suggestions'),
+            $this->buildExportUrl($filter),
             $this->urlGenerator->generate('project_management.presentation.create'),
             $this->urlGenerator->generate('track_management.presentation.index')
         );
@@ -146,6 +147,17 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
             'sortDirection' => $filter->sortDirection,
             'page'          => $page,
             'perPage'       => $filter->perPage,
+        ]);
+    }
+
+    private function buildExportUrl(ProjectListFilterDto $filter): string
+    {
+        return $this->urlGenerator->generate('csv_export.presentation.projects', [
+            'q'             => $filter->searchQuery,
+            'category'      => $filter->categoryFilter,
+            'cancelled'     => $filter->cancelledFilter,
+            'sortBy'        => $filter->sortBy,
+            'sortDirection' => $filter->sortDirection,
         ]);
     }
 

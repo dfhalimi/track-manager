@@ -187,7 +187,7 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
 
     public function getAllTracks(TrackListFilterDto $filter): TrackListResultDto
     {
-        $items       = $this->buildFilteredTrackListItems($filter);
+        $items       = $this->getTrackListItems($filter);
         $totalItems  = count($items);
         $perPage     = $this->normalizePerPage($filter->perPage);
         $totalPages  = max(1, (int) ceil($totalItems / $perPage));
@@ -201,6 +201,11 @@ readonly class TrackManagementDomainService implements TrackManagementDomainServ
             $perPage,
             $totalPages
         );
+    }
+
+    public function getTrackListItems(TrackListFilterDto $filter): array
+    {
+        return $this->buildFilteredTrackListItems($filter);
     }
 
     public function getTrackSearchSuggestions(TrackListFilterDto $filter, int $limit): array

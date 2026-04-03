@@ -6,6 +6,8 @@ namespace App\ProjectManagement\Facade;
 
 use App\ProjectManagement\Facade\Dto\ProjectCategoryDto;
 use App\ProjectManagement\Facade\Dto\ProjectDto;
+use App\ProjectManagement\Facade\Dto\ProjectListExportItemDto;
+use App\ProjectManagement\Facade\Dto\ProjectListFilterInputDto;
 use App\ProjectManagement\Facade\Dto\ProjectTrackAssignmentDto;
 use App\ProjectManagement\Facade\Dto\TrackProjectMembershipDto;
 
@@ -19,6 +21,11 @@ interface ProjectManagementFacadeInterface
      * @return list<ProjectCategoryDto>
      */
     public function getAllProjectCategories(): array;
+
+    /**
+     * @return list<ProjectListExportItemDto>
+     */
+    public function getProjectsByFilter(ProjectListFilterInputDto $filter): array;
 
     /**
      * @return list<ProjectTrackAssignmentDto>

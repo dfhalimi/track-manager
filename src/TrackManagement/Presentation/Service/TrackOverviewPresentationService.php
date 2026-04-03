@@ -102,6 +102,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
             $this->buildIndexUrl($filter, $result->currentPage),
             $this->urlGenerator->generate('track_management.presentation.list'),
             $this->urlGenerator->generate('track_management.presentation.suggestions'),
+            $this->buildExportUrl($filter),
             $this->urlGenerator->generate('track_management.presentation.create')
         );
     }
@@ -185,6 +186,17 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
             'sortDirection' => $filter->sortDirection,
             'page'          => $page,
             'perPage'       => $filter->perPage,
+        ]);
+    }
+
+    private function buildExportUrl(TrackListFilterDto $filter): string
+    {
+        return $this->urlGenerator->generate('csv_export.presentation.tracks', [
+            'q'             => $filter->searchQuery,
+            'status'        => $filter->statusFilter,
+            'cancelled'     => $filter->cancelledFilter,
+            'sortBy'        => $filter->sortBy,
+            'sortDirection' => $filter->sortDirection,
         ]);
     }
 

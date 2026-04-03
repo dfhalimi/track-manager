@@ -6,6 +6,7 @@ namespace App\TrackManagement\Domain\Service;
 
 use App\TrackManagement\Domain\Dto\CreateTrackInputDto;
 use App\TrackManagement\Domain\Dto\TrackListFilterDto;
+use App\TrackManagement\Domain\Dto\TrackListItemDto;
 use App\TrackManagement\Domain\Dto\TrackListResultDto;
 use App\TrackManagement\Domain\Dto\UpdateTrackInputDto;
 use App\TrackManagement\Domain\Entity\Track;
@@ -29,6 +30,11 @@ interface TrackManagementDomainServiceInterface
     public function getTrackByTrackNumber(int $trackNumber): ?Track;
 
     public function getAllTracks(TrackListFilterDto $filter): TrackListResultDto;
+
+    /**
+     * @return list<TrackListItemDto>
+     */
+    public function getTrackListItems(TrackListFilterDto $filter): array;
 
     /**
      * @return list<string>

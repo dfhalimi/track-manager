@@ -7,6 +7,7 @@ namespace App\ProjectManagement\Domain\Service;
 use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ProjectListFilterDto;
+use App\ProjectManagement\Domain\Dto\ProjectListItemDto;
 use App\ProjectManagement\Domain\Dto\ProjectListResultDto;
 use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
 use App\ProjectManagement\Domain\Dto\RemoveTrackFromProjectInputDto;
@@ -42,6 +43,11 @@ interface ProjectManagementDomainServiceInterface
     public function getProjectCategoryByUuid(string $categoryUuid): ProjectCategory;
 
     public function getAllProjects(ProjectListFilterDto $filter): ProjectListResultDto;
+
+    /**
+     * @return list<ProjectListItemDto>
+     */
+    public function getProjectListItems(ProjectListFilterDto $filter): array;
 
     /**
      * @return list<string>

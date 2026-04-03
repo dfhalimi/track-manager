@@ -33,6 +33,7 @@ readonly class ProjectListViewDto
         public string  $indexUrl,
         public string  $listUrl,
         public string  $suggestionsUrl,
+        public string  $exportUrl,
         public string  $createUrl,
         public string  $tracksIndexUrl
     ) {

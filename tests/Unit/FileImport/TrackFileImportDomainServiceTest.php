@@ -11,6 +11,7 @@ use App\FileImport\Infrastructure\Storage\TrackFileStorageInterface;
 use App\TrackManagement\Facade\Dto\TrackChecklistDto;
 use App\TrackManagement\Facade\Dto\TrackDto;
 use App\TrackManagement\Facade\Dto\TrackExportDataDto;
+use App\TrackManagement\Facade\Dto\TrackListFilterInputDto;
 use App\TrackManagement\Facade\Dto\TrackNamingDto;
 use App\TrackManagement\Facade\Dto\TrackSelectionDto;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
@@ -225,6 +226,11 @@ final readonly class ExistingTrackManagementFacadeStub implements TrackManagemen
     }
 
     public function getChecklistByTrackUuid(string $trackUuid): TrackChecklistDto
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getTracksByFilter(TrackListFilterInputDto $filter): array
     {
         throw new BadMethodCallException();
     }

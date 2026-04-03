@@ -9,12 +9,14 @@ use App\FileExport\Domain\Service\TrackFileExportDomainServiceInterface;
 use App\FileExport\Facade\Dto\ExportedTrackFileDto;
 use App\ProjectManagement\Facade\Dto\ProjectCategoryDto;
 use App\ProjectManagement\Facade\Dto\ProjectDto;
+use App\ProjectManagement\Facade\Dto\ProjectListFilterInputDto;
 use App\ProjectManagement\Facade\Dto\ProjectTrackAssignmentDto;
 use App\ProjectManagement\Facade\Dto\TrackProjectMembershipDto;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\TrackManagement\Facade\Dto\TrackChecklistDto;
 use App\TrackManagement\Facade\Dto\TrackDto;
 use App\TrackManagement\Facade\Dto\TrackExportDataDto;
+use App\TrackManagement\Facade\Dto\TrackListFilterInputDto;
 use App\TrackManagement\Facade\Dto\TrackNamingDto;
 use App\TrackManagement\Facade\Dto\TrackSelectionDto;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
@@ -115,6 +117,11 @@ final class ProjectManagementFacadeStub implements ProjectManagementFacadeInterf
         return [new ProjectCategoryDto('category-1', 'EP')];
     }
 
+    public function getProjectsByFilter(ProjectListFilterInputDto $filter): array
+    {
+        throw new BadMethodCallException();
+    }
+
     public function getTrackAssignmentsByProjectUuid(string $projectUuid): array
     {
         return $this->assignments;
@@ -183,6 +190,11 @@ final readonly class ExportTrackManagementFacadeStub implements TrackManagementF
     }
 
     public function getChecklistByTrackUuid(string $trackUuid): TrackChecklistDto
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getTracksByFilter(TrackListFilterInputDto $filter): array
     {
         throw new BadMethodCallException();
     }
