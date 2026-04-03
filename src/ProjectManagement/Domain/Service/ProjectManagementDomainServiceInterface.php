@@ -8,6 +8,7 @@ use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ProjectListFilterDto;
 use App\ProjectManagement\Domain\Dto\ProjectListResultDto;
+use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
 use App\ProjectManagement\Domain\Dto\RemoveTrackFromProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ReorderProjectTracksInputDto;
 use App\ProjectManagement\Domain\Dto\UpdateProjectInputDto;
@@ -27,7 +28,7 @@ interface ProjectManagementDomainServiceInterface
 
     public function reactivateProject(string $projectUuid): Project;
 
-    public function publishProject(string $projectUuid): Project;
+    public function publishProject(PublishProjectInputDto $input): Project;
 
     public function unpublishProject(string $projectUuid): Project;
 

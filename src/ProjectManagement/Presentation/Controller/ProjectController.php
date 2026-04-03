@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Controller;
 
+use App\Common\Service\LocalizedDateTimeService;
 use App\MediaAssetManagement\Facade\MediaAssetManagementFacadeInterface;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
+use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
 use App\ProjectManagement\Domain\Dto\UpdateProjectInputDto;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
 use App\ProjectManagement\Presentation\Service\ProjectDetailPresentationServiceInterface;
 use App\ProjectManagement\Presentation\Service\ProjectFormPresentationServiceInterface;
 use App\ProjectManagement\Presentation\Service\ProjectOverviewPresentationServiceInterface;
+use DateTimeImmutable;
+use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
+use ValueError;
 
 final class ProjectController extends AbstractController
 {
@@ -26,6 +31,7 @@ final class ProjectController extends AbstractController
         private readonly ProjectDetailPresentationServiceInterface   $projectDetailPresentationService,
         private readonly ProjectFormPresentationServiceInterface     $projectFormPresentationService,
         private readonly ProjectManagementDomainServiceInterface     $projectManagementDomainService,
+        private readonly LocalizedDateTimeService                    $localizedDateTimeService,
         private readonly MediaAssetManagementFacadeInterface         $mediaAssetManagementFacade
     ) {
     }
@@ -137,7 +143,8 @@ final class ProjectController extends AbstractController
                         $projectUuid,
                         $request->request->getString('title'),
                         $request->request->getString('category_name'),
-                        $this->filterArtists($request->request->all('artists'))
+                        $this->filterArtists($request->request->all('artists')),
+                        $this->resolveEditPublishedAt($projectUuid, $request)
                     )
                 );
 
@@ -159,7 +166,8 @@ final class ProjectController extends AbstractController
                 $projectUuid,
                 $request->request->getString('title', '') ?: null,
                 $request->request->getString('category_name', '') ?: null,
-                $this->filterArtists($request->request->all('artists'))
+                $this->filterArtists($request->request->all('artists')),
+                $request->request->getString('published_at', '') ?: null
             ),
         ]);
     }
@@ -204,7 +212,13 @@ final class ProjectController extends AbstractController
         }
 
         try {
-            $this->projectManagementDomainService->publishProject($projectUuid);
+            $this->projectManagementDomainService->publishProject(
+                new PublishProjectInputDto(
+                    $projectUuid,
+                    $this->parsePublishedAtInput($request->request->getString('published_at', ''), false)
+                        ?? DateAndTimeService::getDateTimeImmutable()
+                )
+            );
             $this->addFlash('success', 'Projekt wurde veröffentlicht.');
         } catch (Throwable $throwable) {
             $this->addFlash('error', $throwable->getMessage());
@@ -245,5 +259,33 @@ final class ProjectController extends AbstractController
                 static fn (mixed $artist): bool => is_string($artist)
             )
         );
+    }
+
+    private function resolveEditPublishedAt(string $projectUuid, Request $request): ?DateTimeImmutable
+    {
+        $project = $this->projectManagementDomainService->getProjectByUuid($projectUuid);
+        if (!$project->isPublished()) {
+            return null;
+        }
+
+        return $this->parsePublishedAtInput($request->request->getString('published_at', ''), true);
+    }
+
+    private function parsePublishedAtInput(string $submittedValue, bool $required): ?DateTimeImmutable
+    {
+        $normalizedValue = trim($submittedValue);
+        if ($normalizedValue === '') {
+            if ($required) {
+                throw new ValueError('Bitte gib ein Veröffentlichungsdatum an.');
+            }
+
+            return null;
+        }
+
+        try {
+            return $this->localizedDateTimeService->parseInputToUtc($normalizedValue);
+        } catch (ValueError) {
+            throw new ValueError('Bitte gib ein gültiges Veröffentlichungsdatum mit Uhrzeit an.');
+        }
     }
 }

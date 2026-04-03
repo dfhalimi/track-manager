@@ -8,6 +8,7 @@ use App\ActivityHistory\Domain\Dto\ActivityHistoryListItemDto;
 use App\ActivityHistory\Domain\Service\ActivityHistoryDomainServiceInterface;
 use App\ActivityHistory\Presentation\Dto\ActivityHistoryEntryViewDto;
 use App\ActivityHistory\Presentation\Dto\ActivityHistoryModalViewDto;
+use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
 use DateTimeImmutable;
@@ -17,7 +18,8 @@ readonly class ActivityHistoryPresentationService implements ActivityHistoryPres
     public function __construct(
         private ActivityHistoryDomainServiceInterface $activityHistoryDomainService,
         private TrackManagementFacadeInterface        $trackManagementFacade,
-        private ProjectManagementFacadeInterface      $projectManagementFacade
+        private ProjectManagementFacadeInterface      $projectManagementFacade,
+        private LocalizedDateTimeService              $localizedDateTimeService
     ) {
     }
 
@@ -55,7 +57,7 @@ readonly class ActivityHistoryPresentationService implements ActivityHistoryPres
             $entries[] = new ActivityHistoryEntryViewDto(
                 $entry->summary,
                 $entry->details,
-                $entry->occurredAt->format('d.m.Y H:i'),
+                $this->localizedDateTimeService->formatForDisplay($entry->occurredAt),
                 false
             );
         }
@@ -64,7 +66,7 @@ readonly class ActivityHistoryPresentationService implements ActivityHistoryPres
             $entries[] = new ActivityHistoryEntryViewDto(
                 'Erstellt',
                 [],
-                $createdAt->format('d.m.Y H:i'),
+                $this->localizedDateTimeService->formatForDisplay($createdAt),
                 true
             );
         }

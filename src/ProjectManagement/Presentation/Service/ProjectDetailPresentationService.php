@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Service;
 
+use App\Common\Service\LocalizedDateTimeService;
 use App\FileImport\Facade\FileImportFacadeInterface;
 use App\MediaAssetManagement\Facade\MediaAssetManagementFacadeInterface;
 use App\ProjectManagement\Facade\Dto\ProjectTrackAssignmentDto;
@@ -13,6 +14,7 @@ use App\ProjectManagement\Presentation\Dto\ProjectMediaAssetViewDto;
 use App\ProjectManagement\Presentation\Dto\ProjectTrackAssignmentViewDto;
 use App\ProjectManagement\Presentation\Dto\ProjectTrackOptionViewDto;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
+use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 readonly class ProjectDetailPresentationService implements ProjectDetailPresentationServiceInterface
@@ -22,6 +24,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
         private TrackManagementFacadeInterface      $trackManagementFacade,
         private FileImportFacadeInterface           $fileImportFacade,
         private MediaAssetManagementFacadeInterface $mediaAssetManagementFacade,
+        private LocalizedDateTimeService            $localizedDateTimeService,
         private UrlGeneratorInterface               $urlGenerator
     ) {
     }
@@ -81,10 +84,11 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $project->uuid,
             $project->title,
             $project->categoryName,
-            $project->createdAt->format('d.m.Y H:i'),
+            $this->localizedDateTimeService->formatForDisplay($project->createdAt),
             $project->cancelled,
             $project->published,
-            $project->publishedAt?->format('d.m.Y H:i'),
+            $project->publishedAt === null ? null : $this->localizedDateTimeService->formatForDisplay($project->publishedAt),
+            $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $hasExportableTracks,
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'mp3']),
             $this->urlGenerator->generate('file_export.presentation.project_export', ['projectUuid' => $projectUuid, 'format' => 'wav']),
@@ -94,7 +98,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
             $mediaAsset === null ? null : new ProjectMediaAssetViewDto(
                 $mediaAsset->originalFilename,
                 $mediaAsset->mimeType,
-                $mediaAsset->uploadedAt->format('Y-m-d H:i'),
+                $this->localizedDateTimeService->formatForDisplay($mediaAsset->uploadedAt),
                 sprintf('%d x %d px', $mediaAsset->widthPixels, $mediaAsset->heightPixels),
                 $this->urlGenerator->generate('media_asset_management.presentation.preview', ['projectUuid' => $projectUuid]),
                 $this->urlGenerator->generate('media_asset_management.presentation.replace', ['projectUuid' => $projectUuid]),

@@ -6,6 +6,7 @@ namespace App\ActivityHistory\Domain\SymfonyEventSubscriber;
 
 use App\ActivityHistory\Domain\Dto\RecordActivityHistoryEntryInputDto;
 use App\ActivityHistory\Domain\Service\ActivityHistoryDomainServiceInterface;
+use App\Common\Service\LocalizedDateTimeService;
 use App\FileImport\Facade\SymfonyEvent\TrackFileReplacedSymfonyEvent;
 use App\FileImport\Facade\SymfonyEvent\TrackFileUploadedSymfonyEvent;
 use App\MediaAssetManagement\Facade\SymfonyEvent\ProjectImageReplacedSymfonyEvent;
@@ -52,7 +53,8 @@ readonly class ActivityHistorySymfonyEventSubscriber
     public function __construct(
         private ActivityHistoryDomainServiceInterface $activityHistoryDomainService,
         private TrackManagementFacadeInterface        $trackManagementFacade,
-        private ProjectManagementFacadeInterface      $projectManagementFacade
+        private ProjectManagementFacadeInterface      $projectManagementFacade,
+        private LocalizedDateTimeService              $localizedDateTimeService
     ) {
     }
 
@@ -110,7 +112,14 @@ readonly class ActivityHistorySymfonyEventSubscriber
 
     public function onProjectPublished(ProjectPublishedSymfonyEvent $event): void
     {
-        $this->record('project', $event->projectUuid, 'published', 'Projekt veröffentlicht', [], $event->occurredAt);
+        $this->record(
+            'project',
+            $event->projectUuid,
+            'published',
+            'Projekt veröffentlicht',
+            [sprintf('Veröffentlichungsdatum: %s', $this->formatDateTime($event->publishedAt))],
+            $event->occurredAt
+        );
     }
 
     public function onProjectUnpublished(ProjectUnpublishedSymfonyEvent $event): void
@@ -250,5 +259,10 @@ readonly class ActivityHistorySymfonyEventSubscriber
     private function formatTrackLabel(\App\TrackManagement\Facade\Dto\TrackDto $track): string
     {
         return sprintf('Track %d "%s"', $track->trackNumber, $track->title);
+    }
+
+    private function formatDateTime(DateTimeImmutable $value): string
+    {
+        return $this->localizedDateTimeService->formatForDisplay($value);
     }
 }

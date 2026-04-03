@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Domain\Service;
 
+use App\Common\Service\LocalizedDateTimeServiceInterface;
 use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ProjectListFilterDto;
 use App\ProjectManagement\Domain\Dto\ProjectListItemDto;
 use App\ProjectManagement\Domain\Dto\ProjectListResultDto;
+use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
 use App\ProjectManagement\Domain\Dto\RemoveTrackFromProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ReorderProjectTracksInputDto;
 use App\ProjectManagement\Domain\Dto\UpdateProjectInputDto;
@@ -29,6 +31,7 @@ use App\ProjectManagement\Infrastructure\Repository\ProjectCategoryRepositoryInt
 use App\ProjectManagement\Infrastructure\Repository\ProjectRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectTrackAssignmentRepositoryInterface;
 use App\TrackManagement\Facade\TrackManagementFacadeInterface;
+use DateTimeImmutable;
 use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -41,6 +44,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         private ProjectCategoryRepositoryInterface        $projectCategoryRepository,
         private ProjectTrackAssignmentRepositoryInterface $projectTrackAssignmentRepository,
         private TrackManagementFacadeInterface            $trackManagementFacade,
+        private LocalizedDateTimeServiceInterface         $localizedDateTimeService,
         private EventDispatcherInterface                  $eventDispatcher
     ) {
     }
@@ -88,6 +92,9 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $project->setNormalizedTitle($this->normalizeStorageTitle($input->title));
         $project->setCategoryUuid($this->resolveCategory($input->categoryName)->getUuid());
         $project->setArtists($this->normalizeArtists($input->artists));
+        if ($project->isPublished()) {
+            $project->setPublishedAt($this->normalizePublishedAt($input->publishedAt));
+        }
         $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
 
         $this->validateProject($project);
@@ -154,25 +161,27 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         return $project;
     }
 
-    public function publishProject(string $projectUuid): Project
+    public function publishProject(PublishProjectInputDto $input): Project
     {
-        $project = $this->projectRepository->getByUuid($projectUuid);
+        $project = $this->projectRepository->getByUuid($input->projectUuid);
         $this->assertProjectPublicationIsEditable($project);
 
         if ($project->isPublished()) {
             return $project;
         }
 
-        $now = DateAndTimeService::getDateTimeImmutable();
+        $occurredAt  = DateAndTimeService::getDateTimeImmutable();
+        $publishedAt = $this->normalizePublishedAt($input->publishedAt);
 
         $project->setPublished(true);
-        $project->setPublishedAt($now);
-        $project->setUpdatedAt($now);
+        $project->setPublishedAt($publishedAt);
+        $project->setUpdatedAt($occurredAt);
         $this->projectRepository->save($project);
         $this->eventDispatcher->dispatch(
             new ProjectPublishedSymfonyEvent(
                 $project->getUuid(),
-                $now
+                $publishedAt,
+                $occurredAt
             )
         );
 
@@ -604,7 +613,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
      * @return array{
      *     title: string,
      *     categoryName: string,
-     *     artists: string
+     *     artists: string,
+     *     publishedAt: string
      * }
      */
     private function captureProjectSnapshot(Project $project): array
@@ -613,6 +623,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             'title'        => $project->getTitle(),
             'categoryName' => $this->projectCategoryRepository->getByUuid($project->getCategoryUuid())->getName(),
             'artists'      => $this->formatArtists($project->getArtists()),
+            'publishedAt'  => $this->formatPublishedAt($project->getPublishedAt()),
         ];
     }
 
@@ -620,7 +631,8 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
      * @param array{
      *     title: string,
      *     categoryName: string,
-     *     artists: string
+     *     artists: string,
+     *     publishedAt: string
      * } $before
      *
      * @return list<string>
@@ -633,6 +645,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             'title'        => 'Titel',
             'categoryName' => 'Kategorie',
             'artists'      => 'Interpreten',
+            'publishedAt'  => 'Veröffentlicht am',
         ];
 
         $changes = [];
@@ -665,6 +678,24 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
         $trimmed = trim($value);
 
         return $trimmed === '' ? '—' : $trimmed;
+    }
+
+    private function normalizePublishedAt(?DateTimeImmutable $publishedAt): DateTimeImmutable
+    {
+        if (!$publishedAt instanceof DateTimeImmutable) {
+            throw new ValueError('Bitte gib ein Veröffentlichungsdatum an.');
+        }
+
+        if ($publishedAt > DateAndTimeService::getDateTimeImmutable()) {
+            throw new ValueError('Das Veröffentlichungsdatum darf nicht in der Zukunft liegen.');
+        }
+
+        return $publishedAt;
+    }
+
+    private function formatPublishedAt(?DateTimeImmutable $publishedAt): string
+    {
+        return $publishedAt === null ? '—' : $this->localizedDateTimeService->formatForDisplay($publishedAt);
     }
 
     private function resequenceAssignments(string $projectUuid): void

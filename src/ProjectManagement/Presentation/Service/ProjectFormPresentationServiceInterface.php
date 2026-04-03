@@ -24,6 +24,7 @@ interface ProjectFormPresentationServiceInterface
         string  $projectUuid,
         ?string $title = null,
         ?string $categoryName = null,
-        ?array  $artists = null
+        ?array  $artists = null,
+        ?string $publishedAtInputValue = null
     ): ProjectFormViewDto;
 }

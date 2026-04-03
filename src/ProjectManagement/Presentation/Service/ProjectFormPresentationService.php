@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Service;
 
+use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
 use App\ProjectManagement\Presentation\Dto\ProjectFormViewDto;
+use EnterpriseToolingForSymfony\SharedBundle\DateAndTime\Service\DateAndTimeService;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 readonly class ProjectFormPresentationService implements ProjectFormPresentationServiceInterface
 {
     public function __construct(
         private ProjectManagementDomainServiceInterface $projectManagementDomainService,
+        private LocalizedDateTimeService                $localizedDateTimeService,
         private UrlGeneratorInterface                   $urlGenerator
     ) {
     }
@@ -28,6 +31,9 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             (string) ($categoryName ?? 'Single'),
             $this->normalizeArtistsForForm($artists),
             $this->buildCategoryOptions(),
+            false,
+            null,
+            $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $this->urlGenerator->generate('project_management.presentation.create'),
             $this->urlGenerator->generate('project_management.presentation.index'),
             'Projekt erstellen',
@@ -39,7 +45,8 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
         string  $projectUuid,
         ?string $title = null,
         ?string $categoryName = null,
-        ?array  $artists = null
+        ?array  $artists = null,
+        ?string $publishedAtInputValue = null
     ): ProjectFormViewDto {
         $project  = $this->projectManagementDomainService->getProjectByUuid($projectUuid);
         $category = $this->projectManagementDomainService->getProjectCategoryByUuid($project->getCategoryUuid());
@@ -50,6 +57,9 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             (string) ($categoryName ?? $category->getName()),
             $this->normalizeArtistsForForm($artists ?? $project->getArtists()),
             $this->buildCategoryOptions(),
+            $project->isPublished(),
+            $publishedAtInputValue ?? $this->localizedDateTimeService->formatForInput($project->getPublishedAt()),
+            $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $projectUuid]),
             'Projekt speichern',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Presentation\Service;
 
+use App\Common\Service\LocalizedDateTimeService;
 use App\FileImport\Facade\FileImportFacadeInterface;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\TrackManagement\Domain\Enum\TrackStatus;
@@ -20,6 +21,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
         private TrackManagementFacadeInterface   $trackManagementFacade,
         private ProjectManagementFacadeInterface $projectManagementFacade,
         private FileImportFacadeInterface        $fileImportFacade,
+        private LocalizedDateTimeService         $localizedDateTimeService,
         private UrlGeneratorInterface            $urlGenerator
     ) {
     }
@@ -68,7 +70,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
         return new TrackDetailViewDto(
             $track->uuid,
             $track->trackNumber,
-            $track->createdAt->format('d.m.Y H:i'),
+            $this->localizedDateTimeService->formatForDisplay($track->createdAt),
             $track->cancelled,
             $track->beatName,
             $track->title,
@@ -85,7 +87,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
             $trackFile === null ? null : new TrackFileViewDto(
                 $trackFile->originalFilename,
                 $trackFile->mimeType,
-                $trackFile->uploadedAt->format('Y-m-d H:i'),
+                $this->localizedDateTimeService->formatForDisplay($trackFile->uploadedAt),
                 $this->urlGenerator->generate('file_import.presentation.play', ['trackUuid' => $trackUuid]),
                 $this->urlGenerator->generate('file_import.presentation.upload', ['trackUuid' => $trackUuid]),
                 $this->urlGenerator->generate('file_import.presentation.replace', ['trackUuid' => $trackUuid]),
