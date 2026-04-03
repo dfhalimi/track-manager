@@ -230,7 +230,7 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
 
     public function getAllProjects(ProjectListFilterDto $filter): ProjectListResultDto
     {
-        $items       = $this->buildFilteredProjectListItems($filter);
+        $items       = $this->getProjectListItems($filter);
         $totalItems  = count($items);
         $perPage     = $this->normalizePerPage($filter->perPage);
         $totalPages  = max(1, (int) ceil($totalItems / $perPage));
@@ -244,6 +244,11 @@ readonly class ProjectManagementDomainService implements ProjectManagementDomain
             $perPage,
             $totalPages
         );
+    }
+
+    public function getProjectListItems(ProjectListFilterDto $filter): array
+    {
+        return $this->buildFilteredProjectListItems($filter);
     }
 
     public function getProjectSearchSuggestions(ProjectListFilterDto $filter, int $limit): array

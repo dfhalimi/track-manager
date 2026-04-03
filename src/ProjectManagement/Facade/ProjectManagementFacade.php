@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Facade;
 
+use App\ProjectManagement\Domain\Dto\ProjectListFilterDto;
+use App\ProjectManagement\Domain\Dto\ProjectListItemDto;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Entity\ProjectTrackAssignment;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
 use App\ProjectManagement\Facade\Dto\ProjectCategoryDto;
 use App\ProjectManagement\Facade\Dto\ProjectDto;
+use App\ProjectManagement\Facade\Dto\ProjectListExportItemDto;
+use App\ProjectManagement\Facade\Dto\ProjectListFilterInputDto;
 use App\ProjectManagement\Facade\Dto\ProjectTrackAssignmentDto;
 use App\ProjectManagement\Facade\Dto\TrackProjectMembershipDto;
 use Throwable;
@@ -57,6 +61,32 @@ readonly class ProjectManagementFacade implements ProjectManagementFacadeInterfa
                 $category->getName()
             ),
             $this->projectManagementDomainService->getAllProjectCategories()
+        );
+    }
+
+    public function getProjectsByFilter(ProjectListFilterInputDto $filter): array
+    {
+        return array_map(
+            static fn (ProjectListItemDto $project): ProjectListExportItemDto => new ProjectListExportItemDto(
+                $project->uuid,
+                $project->title,
+                $project->categoryName,
+                $project->artists,
+                $project->cancelled,
+                $project->published,
+                $project->trackCount
+            ),
+            $this->projectManagementDomainService->getProjectListItems(
+                new ProjectListFilterDto(
+                    $filter->searchQuery,
+                    $filter->categoryFilter,
+                    $filter->cancelledFilter,
+                    $filter->sortBy,
+                    $filter->sortDirection,
+                    1,
+                    PHP_INT_MAX
+                )
+            )
         );
     }
 

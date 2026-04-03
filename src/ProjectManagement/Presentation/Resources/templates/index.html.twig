@@ -18,7 +18,10 @@
                     <p class="text-sm text-slate-600">Verwalte Releases, Kategorien und Track-Reihenfolgen.</p>
                 </div>
             </div>
-            <a href="{{ view.createUrl }}" class="inline-flex items-center justify-center rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Neues Projekt erstellen</a>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ view.exportUrl }}" class="inline-flex items-center justify-center rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">CSV Export</a>
+                <a href="{{ view.createUrl }}" class="inline-flex items-center justify-center rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Neues Projekt erstellen</a>
+            </div>
         </div>
 
         {% for type, messages in app.flashes %}

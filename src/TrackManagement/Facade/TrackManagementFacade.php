@@ -16,6 +16,8 @@ use App\TrackManagement\Facade\Dto\ChecklistItemDto;
 use App\TrackManagement\Facade\Dto\TrackChecklistDto;
 use App\TrackManagement\Facade\Dto\TrackDto;
 use App\TrackManagement\Facade\Dto\TrackExportDataDto;
+use App\TrackManagement\Facade\Dto\TrackListExportItemDto;
+use App\TrackManagement\Facade\Dto\TrackListFilterInputDto;
 use App\TrackManagement\Facade\Dto\TrackNamingDto;
 use App\TrackManagement\Facade\Dto\TrackSelectionDto;
 use Throwable;
@@ -98,6 +100,36 @@ readonly class TrackManagementFacade implements TrackManagementFacadeInterface
             ),
             $this->progressCalculator->calculateProgress($items),
             $this->trackStatusResolver->resolveStatus($items)->value
+        );
+    }
+
+    public function getTracksByFilter(TrackListFilterInputDto $filter): array
+    {
+        return array_map(
+            static fn (TrackListItemDto $track): TrackListExportItemDto => new TrackListExportItemDto(
+                $track->uuid,
+                $track->trackNumber,
+                $track->beatName,
+                $track->title,
+                $track->publishingName,
+                $track->bpms,
+                $track->musicalKeys,
+                $track->progress,
+                $track->status,
+                $track->cancelled,
+                $track->published
+            ),
+            $this->trackManagementDomainService->getTrackListItems(
+                new TrackListFilterDto(
+                    $filter->searchQuery,
+                    $filter->statusFilter,
+                    $filter->cancelledFilter,
+                    $filter->sortBy,
+                    $filter->sortDirection,
+                    1,
+                    PHP_INT_MAX
+                )
+            )
         );
     }
 
