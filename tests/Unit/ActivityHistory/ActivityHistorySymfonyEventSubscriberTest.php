@@ -81,7 +81,7 @@ describe('ActivityHistorySymfonyEventSubscriber', function (): void {
             new ActivityHistoryProjectManagementFacadeStub(),
             new LocalizedDateTimeService('Europe/Berlin')
         );
-        $publishedAt = createTestDateTime('2026-04-01 10:15');
+        $publishedAt = createActivityHistoryTestDateTime('2026-04-01 10:15');
 
         $subscriber->onProjectPublished(
             new ProjectPublishedSymfonyEvent(
@@ -116,7 +116,7 @@ final class RecordingActivityHistoryDomainService implements ActivityHistoryDoma
     }
 }
 
-function createTestDateTime(string $dateTime): DateTimeImmutable
+function createActivityHistoryTestDateTime(string $dateTime): DateTimeImmutable
 {
     [$datePart, $timePart] = explode(' ', $dateTime);
     [$year, $month, $day]  = array_map('intval', explode('-', $datePart));

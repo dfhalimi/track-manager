@@ -160,14 +160,14 @@ describe('ProjectManagementDomainService', function (): void {
             new EventDispatcher()
         );
 
-        $publishedAt      = createTestDateTime('2026-04-01 10:15');
+        $publishedAt      = createProjectManagementTestDateTime('2026-04-01 10:15');
         $publishedProject = $service->publishProject(new PublishProjectInputDto('project-1', $publishedAt));
 
         expect($publishedProject->isPublished())->toBeTrue();
         expect($publishedProject->getPublishedAt())->toEqual($publishedAt);
 
         $initialPublishedAt = $publishedProject->getPublishedAt();
-        $publishedAgain     = $service->publishProject(new PublishProjectInputDto('project-1', createTestDateTime('2026-04-02 12:00')));
+        $publishedAgain     = $service->publishProject(new PublishProjectInputDto('project-1', createProjectManagementTestDateTime('2026-04-02 12:00')));
 
         expect($publishedAgain->isPublished())->toBeTrue();
         expect($publishedAgain->getPublishedAt())->toEqual($initialPublishedAt);
@@ -216,7 +216,7 @@ describe('ProjectManagementDomainService', function (): void {
                 'Spring Tape',
                 'single',
                 [],
-                createTestDateTime('2026-03-28 18:30')
+                createProjectManagementTestDateTime('2026-03-28 18:30')
             )
         );
 
@@ -287,7 +287,7 @@ function createLocalizedDateTimeService(): LocalizedDateTimeService
     return new LocalizedDateTimeService('Europe/Berlin');
 }
 
-function createTestDateTime(string $dateTime): DateTimeImmutable
+function createProjectManagementTestDateTime(string $dateTime): DateTimeImmutable
 {
     [$datePart, $timePart] = explode(' ', $dateTime);
     [$year, $month, $day]  = array_map('intval', explode('-', $datePart));
