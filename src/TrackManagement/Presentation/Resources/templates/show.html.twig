@@ -101,7 +101,7 @@
                                 <p class="text-xs text-slate-500">Erlaubte Formate: MP3 oder WAV, maximal 250 MB</p>
                             </form>
                         {% else %}
-                            <p class="text-xs text-slate-500">Bestehende Dateien bleiben verfuegbar, koennen aber bei archivierten Tracks nicht ersetzt werden.</p>
+                            <p class="text-xs text-slate-500">Bestehende Dateien bleiben verfügbar, können aber bei archivierten Tracks nicht ersetzt werden.</p>
                         {% endif %}
                         <div class="flex gap-2">
                             <a href="{{ view.trackFile.exportMp3Url }}" class="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-900">Export MP3</a>
@@ -150,7 +150,12 @@
                     <div class="rounded border border-slate-200 px-4 py-3">
                         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <p class="text-sm font-medium text-slate-900">{{ project.projectTitle }}</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <p class="text-sm font-medium text-slate-900">{{ project.projectTitle }}</p>
+                                    {% if project.published %}
+                                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Veröffentlicht</span>
+                                    {% endif %}
+                                </div>
                                 <p class="text-xs uppercase tracking-wide text-slate-500">{{ project.categoryName }} · Position {{ project.position }}</p>
                             </div>
                             <a href="{{ project.showUrl }}" class="text-sm text-slate-900 underline">Projekt ansehen</a>

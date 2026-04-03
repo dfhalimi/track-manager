@@ -134,6 +134,51 @@ describe('ProjectManagementDomainService', function (): void {
 
         expect($project->getArtists())->toBe(['Artist One', 'Artist Two']);
     });
+
+    it('publishes and unpublishes a project including published timestamp', function (): void {
+        $service = new ProjectManagementDomainService(
+            new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1')]),
+            new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
+            new InMemoryProjectTrackAssignmentRepository(),
+            new TrackManagementFacadeStub([])
+        );
+
+        $publishedProject = $service->publishProject('project-1');
+
+        expect($publishedProject->isPublished())->toBeTrue();
+        expect($publishedProject->getPublishedAt())->toBeInstanceOf(DateTimeImmutable::class);
+
+        $initialPublishedAt = $publishedProject->getPublishedAt();
+        $publishedAgain     = $service->publishProject('project-1');
+
+        expect($publishedAgain->isPublished())->toBeTrue();
+        expect($publishedAgain->getPublishedAt())->toEqual($initialPublishedAt);
+
+        $unpublishedProject = $service->unpublishProject('project-1');
+
+        expect($unpublishedProject->isPublished())->toBeFalse();
+        expect($unpublishedProject->getPublishedAt())->toBeNull();
+
+        $unpublishedAgain = $service->unpublishProject('project-1');
+
+        expect($unpublishedAgain->isPublished())->toBeFalse();
+        expect($unpublishedAgain->getPublishedAt())->toBeNull();
+    });
+
+    it('rejects publish changes for archived projects', function (): void {
+        $service = new ProjectManagementDomainService(
+            new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1', true)]),
+            new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
+            new InMemoryProjectTrackAssignmentRepository(),
+            new TrackManagementFacadeStub([])
+        );
+
+        $publishAction   = static fn () => $service->publishProject('project-1');
+        $unpublishAction = static fn () => $service->unpublishProject('project-1');
+
+        expect($publishAction)->toThrow(ValueError::class, 'Archivierte Projekte koennen nicht veroeffentlicht oder ent-veroeffentlicht werden.');
+        expect($unpublishAction)->toThrow(ValueError::class, 'Archivierte Projekte koennen nicht veroeffentlicht oder ent-veroeffentlicht werden.');
+    });
 });
 
 function createProjectCategory(string $uuid, string $name, string $normalizedName): ProjectCategory
@@ -148,13 +193,16 @@ function createProjectCategory(string $uuid, string $name, string $normalizedNam
     return $category;
 }
 
-function createProject(string $uuid, string $title, string $categoryUuid): Project
+function createProject(string $uuid, string $title, string $categoryUuid, bool $cancelled = false, bool $published = false): Project
 {
     $project = new Project();
     $project->setUuid($uuid);
     $project->setTitle($title);
     $project->setNormalizedTitle(mb_strtolower(trim(preg_replace('/\s+/', ' ', $title) ?? $title)));
     $project->setCategoryUuid($categoryUuid);
+    $project->setCancelled($cancelled);
+    $project->setPublished($published);
+    $project->setPublishedAt($published ? DateAndTimeService::getDateTimeImmutable() : null);
     $project->setCreatedAt(DateAndTimeService::getDateTimeImmutable());
     $project->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
 

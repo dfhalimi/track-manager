@@ -17,6 +17,7 @@ readonly class TrackListItemViewDto
         public string            $statusLabel,
         public string            $statusValue,
         public bool              $cancelled,
+        public bool              $published,
         public int               $progress,
         public bool              $hasCurrentFile,
         public string            $uploadUrl,

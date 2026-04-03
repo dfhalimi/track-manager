@@ -16,6 +16,8 @@ readonly class ProjectDetailViewDto
         public string                    $categoryName,
         public string                    $createdAt,
         public bool                      $cancelled,
+        public bool                      $published,
+        public ?string                   $publishedAt,
         public bool                      $hasExportableTracks,
         public string                    $exportAllMp3Url,
         public string                    $exportAllWavUrl,
@@ -28,6 +30,8 @@ readonly class ProjectDetailViewDto
         public string                    $editUrl,
         public string                    $cancelUrl,
         public string                    $reactivateUrl,
+        public string                    $publishUrl,
+        public string                    $unpublishUrl,
         public string                    $addTrackUrl,
         public string                    $reorderUrl
     ) {

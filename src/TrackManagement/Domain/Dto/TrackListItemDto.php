@@ -23,6 +23,7 @@ readonly class TrackListItemDto
         public int               $progress,
         public string            $status,
         public bool              $cancelled,
+        public bool              $published,
         public bool              $hasCurrentFile,
         public DateTimeImmutable $updatedAt
     ) {

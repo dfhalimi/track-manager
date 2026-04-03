@@ -194,6 +194,44 @@ final class ProjectController extends AbstractController
         return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
     }
 
+    #[Route(path: '/projects/{projectUuid}/publish', name: 'project_management.presentation.publish', methods: [Request::METHOD_POST])]
+    public function publishAction(Request $request, string $projectUuid): Response
+    {
+        if (!$this->isCsrfTokenValid('publish_project_' . $projectUuid, $request->request->getString('_token'))) {
+            $this->addFlash('error', 'Ungültiges CSRF-Token.');
+
+            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        }
+
+        try {
+            $this->projectManagementDomainService->publishProject($projectUuid);
+            $this->addFlash('success', 'Projekt wurde veröffentlicht.');
+        } catch (Throwable $throwable) {
+            $this->addFlash('error', $throwable->getMessage());
+        }
+
+        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+    }
+
+    #[Route(path: '/projects/{projectUuid}/unpublish', name: 'project_management.presentation.unpublish', methods: [Request::METHOD_POST])]
+    public function unpublishAction(Request $request, string $projectUuid): Response
+    {
+        if (!$this->isCsrfTokenValid('unpublish_project_' . $projectUuid, $request->request->getString('_token'))) {
+            $this->addFlash('error', 'Ungültiges CSRF-Token.');
+
+            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        }
+
+        try {
+            $this->projectManagementDomainService->unpublishProject($projectUuid);
+            $this->addFlash('success', 'Projekt wurde zurück auf unveröffentlicht gesetzt.');
+        } catch (Throwable $throwable) {
+            $this->addFlash('error', $throwable->getMessage());
+        }
+
+        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+    }
+
     /**
      * @param array<mixed> $artists
      *

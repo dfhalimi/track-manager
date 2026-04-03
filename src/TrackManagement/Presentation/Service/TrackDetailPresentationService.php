@@ -60,6 +60,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
                 $membership->projectTitle,
                 $membership->categoryName,
                 $membership->position,
+                $membership->published,
                 $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $membership->projectUuid])
             );
         }

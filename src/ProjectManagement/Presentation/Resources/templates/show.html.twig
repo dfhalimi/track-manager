@@ -12,9 +12,21 @@
                 <p class="text-sm text-slate-500">{{ view.categoryName }}</p>
                 <h1 class="text-3xl font-semibold text-slate-900">{{ view.title }}</h1>
                 <p class="text-sm text-slate-600">Erstellt am {{ view.createdAt }}</p>
+                <p class="text-sm text-slate-600">Veröffentlicht am {{ view.publishedAt ?: '—' }}</p>
             </div>
             <div class="flex gap-3">
                 {% if not view.cancelled %}
+                    {% if view.published %}
+                        <form method="post" action="{{ view.unpublishUrl }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('unpublish_project_' ~ view.uuid) }}">
+                            <button type="submit" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Veröffentlichung aufheben</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ view.publishUrl }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('publish_project_' ~ view.uuid) }}">
+                            <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Veröffentlichen</button>
+                        </form>
+                    {% endif %}
                     <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
                     <form method="post" action="{{ view.cancelUrl }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('cancel_project_' ~ view.uuid) }}">

@@ -29,7 +29,7 @@ describe('ProjectFileExportDomainService', function (): void {
 
         $service = new ProjectFileExportDomainService(
             new ProjectManagementFacadeStub(
-                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', false, DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
+                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', false, false, null, DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
                 [
                     new ProjectTrackAssignmentDto('track-1', 1),
                     new ProjectTrackAssignmentDto('track-2', 2),
@@ -62,7 +62,7 @@ describe('ProjectFileExportDomainService', function (): void {
 
         $service = new ProjectFileExportDomainService(
             new ProjectManagementFacadeStub(
-                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', false, DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
+                new ProjectDto('project-1', 'Spring Tape', 'category-1', 'EP', false, false, null, DateAndTimeService::getDateTimeImmutable(), DateAndTimeService::getDateTimeImmutable()),
                 [
                     new ProjectTrackAssignmentDto('track-1', 1),
                 ]
@@ -122,7 +122,7 @@ final class ProjectManagementFacadeStub implements ProjectManagementFacadeInterf
 
     public function getProjectsByTrackUuid(string $trackUuid): array
     {
-        return [new TrackProjectMembershipDto($this->project->uuid, $this->project->title, $this->project->categoryName, 1)];
+        return [new TrackProjectMembershipDto($this->project->uuid, $this->project->title, $this->project->categoryName, 1, $this->project->published)];
     }
 
     public function removeTrackFromAllProjects(string $trackUuid): void

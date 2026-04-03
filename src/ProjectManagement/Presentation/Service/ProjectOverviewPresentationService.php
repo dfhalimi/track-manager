@@ -45,6 +45,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
                 $item->categoryName,
                 $item->artists,
                 $item->cancelled,
+                $item->published,
                 $item->trackCount,
                 $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $item->uuid]),
                 $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $item->uuid])
