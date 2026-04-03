@@ -18,6 +18,7 @@ readonly class ProjectDetailViewDto
         public bool                      $cancelled,
         public bool                      $published,
         public ?string                   $publishedAt,
+        public string                    $publishDefaultPublishedAtInputValue,
         public bool                      $hasExportableTracks,
         public string                    $exportAllMp3Url,
         public string                    $exportAllWavUrl,

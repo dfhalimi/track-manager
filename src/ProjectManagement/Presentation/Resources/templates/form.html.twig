@@ -54,6 +54,21 @@
                 <p class="mt-1 text-xs text-slate-500">Optional. Du kannst keinen, einen oder mehrere Interpreten hinterlegen.</p>
             </div>
 
+            {% if view.isEditMode and view.published %}
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">Veröffentlicht am</label>
+                    <input
+                        type="datetime-local"
+                        name="published_at"
+                        value="{{ view.publishedAtInputValue }}"
+                        max="{{ view.publishedAtMaxValue }}"
+                        required
+                        class="w-full rounded border border-slate-300 px-3 py-2 text-sm md:w-auto md:min-w-[18rem]"
+                    >
+                    <p class="mt-1 text-xs text-slate-500">Nur für bereits veröffentlichte Projekte. Das Datum kann rückwirkend angepasst werden, aber nicht in der Zukunft liegen.</p>
+                </div>
+            {% endif %}
+
             <div>
                 <label class="mb-1 block text-sm font-medium text-slate-700">{{ view.isEditMode ? 'Projektbild ersetzen (optional)' : 'Projektbild (optional)' }}</label>
                 <input type="file" name="project_image" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="w-full rounded border border-slate-300 px-3 py-2 text-sm">

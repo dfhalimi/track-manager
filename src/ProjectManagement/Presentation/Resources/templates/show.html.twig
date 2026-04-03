@@ -25,10 +25,39 @@
                             <button type="submit" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Veröffentlichung aufheben</button>
                         </form>
                     {% else %}
-                        <form method="post" action="{{ view.publishUrl }}">
-                            <input type="hidden" name="_token" value="{{ csrf_token('publish_project_' ~ view.uuid) }}">
-                            <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Veröffentlichen</button>
-                        </form>
+                        <div data-controller="dialog">
+                            <button type="button" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white" data-action="dialog#open">Veröffentlichen</button>
+                            <dialog
+                                class="fixed left-1/2 top-1/2 m-0 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded border border-slate-200 p-0 shadow-xl backdrop:bg-slate-900/30"
+                                data-dialog-target="dialog"
+                                data-action="click->dialog#closeOnBackdrop"
+                            >
+                                <div class="space-y-4 p-6">
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-slate-900">Projekt veröffentlichen</h2>
+                                        <p class="mt-1 text-sm text-slate-600">Gib das tatsächliche Veröffentlichungsdatum an. Standardmäßig ist der aktuelle Zeitpunkt vorbelegt.</p>
+                                    </div>
+                                    <form method="post" action="{{ view.publishUrl }}" class="space-y-4">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('publish_project_' ~ view.uuid) }}">
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-slate-700">Veröffentlicht am</label>
+                                            <input
+                                                type="datetime-local"
+                                                name="published_at"
+                                                value="{{ view.publishDefaultPublishedAtInputValue }}"
+                                                max="{{ view.publishDefaultPublishedAtInputValue }}"
+                                                class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                                            >
+                                            <p class="mt-1 text-xs text-slate-500">Optional. Wenn du nichts änderst, wird der aktuelle Zeitpunkt übernommen. Zukunftsdaten sind nicht erlaubt.</p>
+                                        </div>
+                                        <div class="flex justify-end gap-3">
+                                            <button type="button" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900" data-action="dialog#close">Abbrechen</button>
+                                            <button type="submit" class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white">Veröffentlichen</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </dialog>
+                        </div>
                     {% endif %}
                     <a href="{{ view.editUrl }}" class="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900">Bearbeiten</a>
                     <form method="post" action="{{ view.cancelUrl }}">

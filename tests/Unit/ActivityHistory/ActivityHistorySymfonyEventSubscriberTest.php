@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\ActivityHistory\Domain\Dto\RecordActivityHistoryEntryInputDto;
 use App\ActivityHistory\Domain\Service\ActivityHistoryDomainServiceInterface;
 use App\ActivityHistory\Domain\SymfonyEventSubscriber\ActivityHistorySymfonyEventSubscriber;
+use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Facade\Dto\ProjectDto;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
+use App\ProjectManagement\Facade\SymfonyEvent\ProjectPublishedSymfonyEvent;
 use App\ProjectManagement\Facade\SymfonyEvent\TrackAssignedToProjectSymfonyEvent;
 use App\TrackManagement\Domain\Enum\TrackStatus;
 use App\TrackManagement\Facade\Dto\TrackChecklistDto;
@@ -23,7 +25,8 @@ describe('ActivityHistorySymfonyEventSubscriber', function (): void {
         $subscriber           = new ActivityHistorySymfonyEventSubscriber(
             $historyDomainService,
             new ActivityHistoryTrackManagementFacadeStub(),
-            new ActivityHistoryProjectManagementFacadeStub()
+            new ActivityHistoryProjectManagementFacadeStub(),
+            new LocalizedDateTimeService('Europe/Berlin')
         );
 
         $subscriber->onTrackAssignedToProject(
@@ -51,7 +54,8 @@ describe('ActivityHistorySymfonyEventSubscriber', function (): void {
         $subscriber           = new ActivityHistorySymfonyEventSubscriber(
             $historyDomainService,
             new ActivityHistoryTrackManagementFacadeStub(),
-            new ActivityHistoryProjectManagementFacadeStub()
+            new ActivityHistoryProjectManagementFacadeStub(),
+            new LocalizedDateTimeService('Europe/Berlin')
         );
 
         $subscriber->onTrackStatusChanged(
@@ -67,6 +71,30 @@ describe('ActivityHistorySymfonyEventSubscriber', function (): void {
         expect($historyDomainService->recordedInputs[0]->entityType)->toBe('track');
         expect($historyDomainService->recordedInputs[0]->summary)->toBe('Track-Status geändert');
         expect($historyDomainService->recordedInputs[0]->details)->toBe(['Status: New -> In Progress']);
+    });
+
+    it('writes the actual release date when a project is published', function (): void {
+        $historyDomainService = new RecordingActivityHistoryDomainService();
+        $subscriber           = new ActivityHistorySymfonyEventSubscriber(
+            $historyDomainService,
+            new ActivityHistoryTrackManagementFacadeStub(),
+            new ActivityHistoryProjectManagementFacadeStub(),
+            new LocalizedDateTimeService('Europe/Berlin')
+        );
+        $publishedAt = new \DateTimeImmutable('2026-04-01 10:15');
+
+        $subscriber->onProjectPublished(
+            new ProjectPublishedSymfonyEvent(
+                'project-1',
+                $publishedAt,
+                DateAndTimeService::getDateTimeImmutable()
+            )
+        );
+
+        expect($historyDomainService->recordedInputs)->toHaveCount(1);
+        expect($historyDomainService->recordedInputs[0]->entityType)->toBe('project');
+        expect($historyDomainService->recordedInputs[0]->summary)->toBe('Projekt veröffentlicht');
+        expect($historyDomainService->recordedInputs[0]->details)->toBe(['Veröffentlichungsdatum: 01.04.2026 12:15']);
     });
 });
 

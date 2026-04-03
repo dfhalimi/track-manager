@@ -4,7 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    app.timezone: "%env(APP_TIMEZONE)%"
+    app.timezone: "Europe/Berlin"
 
     app.mail.default_sender_address: "%env(MAIL_DEFAULT_SENDER_ADDRESS)%"
 
@@ -34,6 +34,10 @@ services:
     App\MediaAssetManagement\Infrastructure\Storage\ProjectMediaAssetStorage:
         arguments:
             $projectDir: "%kernel.project_dir%"
+
+    App\Common\Service\LocalizedDateTimeService:
+        arguments:
+            $appTimezone: "%app.timezone%"
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

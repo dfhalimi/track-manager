@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\TrackManagement\Presentation\Service;
 
 use App\Common\Presentation\Dto\PaginationLinkViewDto;
+use App\Common\Service\LocalizedDateTimeService;
 use App\FileImport\Facade\FileImportFacadeInterface;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\TrackManagement\Domain\Dto\TrackListFilterDto;
@@ -27,6 +28,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
         private TrackManagementDomainServiceInterface $trackManagementDomainService,
         private ProjectManagementFacadeInterface      $projectManagementFacade,
         private FileImportFacadeInterface             $fileImportFacade,
+        private LocalizedDateTimeService              $localizedDateTimeService,
         private UrlGeneratorInterface                 $urlGenerator
     ) {
     }
@@ -67,7 +69,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
                 $trackFile === null ? null : new TrackFileViewDto(
                     $trackFile->originalFilename,
                     $trackFile->mimeType,
-                    $trackFile->uploadedAt->format('Y-m-d H:i'),
+                    $this->localizedDateTimeService->formatForDisplay($trackFile->uploadedAt),
                     $this->urlGenerator->generate('file_import.presentation.play', ['trackUuid' => $item->uuid]),
                     $this->urlGenerator->generate('file_import.presentation.upload', ['trackUuid' => $item->uuid]),
                     $this->urlGenerator->generate('file_import.presentation.replace', ['trackUuid' => $item->uuid]),

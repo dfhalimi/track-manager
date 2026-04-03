@@ -10,6 +10,7 @@ readonly class ProjectPublishedSymfonyEvent
 {
     public function __construct(
         public string            $projectUuid,
+        public DateTimeImmutable $publishedAt,
         public DateTimeImmutable $occurredAt
     ) {
     }

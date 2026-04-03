@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use App\ProjectManagement\Domain\Dto\AddTrackToProjectInputDto;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
+use App\ProjectManagement\Domain\Dto\PublishProjectInputDto;
 use App\ProjectManagement\Domain\Dto\ReorderProjectTracksInputDto;
 use App\ProjectManagement\Domain\Dto\UpdateProjectInputDto;
 use App\ProjectManagement\Domain\Entity\Project;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Entity\ProjectTrackAssignment;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainService;
+use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Infrastructure\Repository\ProjectCategoryRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectRepositoryInterface;
 use App\ProjectManagement\Infrastructure\Repository\ProjectTrackAssignmentRepositoryInterface;
@@ -33,6 +35,7 @@ describe('ProjectManagementDomainService', function (): void {
             $categoryRepository,
             new InMemoryProjectTrackAssignmentRepository(),
             new TrackManagementFacadeStub(['track-1']),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
@@ -58,6 +61,7 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Album', 'album')]),
             $assignmentRepository,
             new TrackManagementFacadeStub(['track-1', 'track-2', 'track-3']),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
@@ -85,6 +89,7 @@ describe('ProjectManagementDomainService', function (): void {
                 createAssignment('assignment-1', 'project-1', 'track-1', 1),
             ]),
             new TrackManagementFacadeStub(['track-1']),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
@@ -101,6 +106,7 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
             new TrackManagementFacadeStub([]),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
@@ -118,6 +124,7 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
             new TrackManagementFacadeStub([]),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
@@ -132,6 +139,7 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
             new TrackManagementFacadeStub([]),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
@@ -148,16 +156,18 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
             new TrackManagementFacadeStub([]),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
-        $publishedProject = $service->publishProject('project-1');
+        $publishedAt      = new \DateTimeImmutable('2026-04-01 10:15');
+        $publishedProject = $service->publishProject(new PublishProjectInputDto('project-1', $publishedAt));
 
         expect($publishedProject->isPublished())->toBeTrue();
-        expect($publishedProject->getPublishedAt())->toBeInstanceOf(DateTimeImmutable::class);
+        expect($publishedProject->getPublishedAt())->toEqual($publishedAt);
 
         $initialPublishedAt = $publishedProject->getPublishedAt();
-        $publishedAgain     = $service->publishProject('project-1');
+        $publishedAgain     = $service->publishProject(new PublishProjectInputDto('project-1', new \DateTimeImmutable('2026-04-02 12:00')));
 
         expect($publishedAgain->isPublished())->toBeTrue();
         expect($publishedAgain->getPublishedAt())->toEqual($initialPublishedAt);
@@ -179,14 +189,55 @@ describe('ProjectManagementDomainService', function (): void {
             new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
             new InMemoryProjectTrackAssignmentRepository(),
             new TrackManagementFacadeStub([]),
+            createLocalizedDateTimeService(),
             new EventDispatcher()
         );
 
-        $publishAction   = static fn () => $service->publishProject('project-1');
+        $publishAction   = static fn () => $service->publishProject(new PublishProjectInputDto('project-1', DateAndTimeService::getDateTimeImmutable()));
         $unpublishAction = static fn () => $service->unpublishProject('project-1');
 
         expect($publishAction)->toThrow(ValueError::class, 'Archivierte Projekte koennen nicht veroeffentlicht oder ent-veroeffentlicht werden.');
         expect($unpublishAction)->toThrow(ValueError::class, 'Archivierte Projekte koennen nicht veroeffentlicht oder ent-veroeffentlicht werden.');
+    });
+
+    it('allows adjusting published at for already published projects', function (): void {
+        $service = new ProjectManagementDomainService(
+            new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1', false, true)]),
+            new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
+            new InMemoryProjectTrackAssignmentRepository(),
+            new TrackManagementFacadeStub([]),
+            createLocalizedDateTimeService(),
+            new EventDispatcher()
+        );
+
+        $updatedProject = $service->updateProject(
+            new UpdateProjectInputDto(
+                'project-1',
+                'Spring Tape',
+                'single',
+                [],
+                new \DateTimeImmutable('2026-03-28 18:30')
+            )
+        );
+
+        expect($updatedProject->getPublishedAt()?->format('Y-m-d H:i'))->toBe('2026-03-28 18:30');
+    });
+
+    it('rejects future published at timestamps', function (): void {
+        $service = new ProjectManagementDomainService(
+            new InMemoryProjectRepository([createProject('project-1', 'Spring Tape', 'category-1')]),
+            new InMemoryProjectCategoryRepository([createProjectCategory('category-1', 'Single', 'single')]),
+            new InMemoryProjectTrackAssignmentRepository(),
+            new TrackManagementFacadeStub([]),
+            createLocalizedDateTimeService(),
+            new EventDispatcher()
+        );
+
+        $futureDate = DateAndTimeService::getDateTimeImmutable()->modify('+1 day');
+
+        $publishAction = static fn () => $service->publishProject(new PublishProjectInputDto('project-1', $futureDate));
+
+        expect($publishAction)->toThrow(ValueError::class, 'Das Veröffentlichungsdatum darf nicht in der Zukunft liegen.');
     });
 });
 
@@ -229,6 +280,11 @@ function createAssignment(string $uuid, string $projectUuid, string $trackUuid, 
     $assignment->setUpdatedAt(DateAndTimeService::getDateTimeImmutable());
 
     return $assignment;
+}
+
+function createLocalizedDateTimeService(): LocalizedDateTimeService
+{
+    return new LocalizedDateTimeService('Europe/Berlin');
 }
 
 final class InMemoryProjectCategoryRepository implements ProjectCategoryRepositoryInterface
