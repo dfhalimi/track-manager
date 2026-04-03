@@ -2,16 +2,17 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/dx-tooling/etfs-app-starter-kit/ci.yml?branch=main)](https://github.com/dx-tooling/etfs-app-starter-kit/actions/workflows/ci.yml)
 
-A Symfony application for managing music tracks, checklists and the latest exported or uploaded audio files.
+A Symfony application for managing music tracks, release projects, checklists, and the latest uploaded audio or artwork assets.
 
 
 ## Vision
 
 The Track Manager is built on top of the ETFS starter architecture and focuses on:
 
-- **Track management** with `trackNumber`, `beatName`, editable `title`, `bpm` and `musicalKey`
+- **Track management** with `trackNumber`, `beatName`, editable `title`, optional `publishingName`, `bpms` and `musicalKeys`
 - **Checklist-driven progress** with derived status and progress values
-- **Current audio file handling** for upload, replacement, in-app playback and export
+- **Current audio file handling** for upload, replacement, in-app playback and export as `mp3` or `wav`
+- **Project management** with reusable categories, optional artists, ordering of assigned tracks, archive state and publish state
 - **Clean ETFS-style architecture** with verticals, facades, DTOs and presentation services
 
 
@@ -26,7 +27,7 @@ The Track Manager is built on top of the ETFS starter architecture and focuses o
 
 ```bash
 # Enter the repository
-cd etfs-app-starter-kit
+cd track-manager
 
 # Trust mise configuration
 mise trust
