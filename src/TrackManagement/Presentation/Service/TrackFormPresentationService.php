@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Presentation\Service;
 
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\TrackManagement\Domain\Dto\TrackNamingInputDto;
 use App\TrackManagement\Domain\Service\TrackManagementDomainServiceInterface;
 use App\TrackManagement\Domain\Service\TrackNamingDomainServiceInterface;
@@ -18,6 +19,7 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
         private TrackManagementDomainServiceInterface $trackManagementDomainService,
         private TrackManagementFacadeInterface        $trackManagementFacade,
         private TrackNamingDomainServiceInterface     $trackNamingDomainService,
+        private OverviewNavigationState               $overviewNavigationState,
         private UrlGeneratorInterface                 $urlGenerator
     ) {
     }
@@ -55,7 +57,8 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
             $notes,
             $isrc,
             $this->urlGenerator->generate('track_management.presentation.create'),
-            $this->urlGenerator->generate('track_management.presentation.index'),
+            $this->overviewNavigationState->buildTrackOverviewUrl(),
+            $this->overviewNavigationState->buildProjectOverviewUrl(),
             'Track erstellen',
             $suggestedTitle,
             false
@@ -96,7 +99,8 @@ readonly class TrackFormPresentationService implements TrackFormPresentationServ
             $notes ?? $track->notes,
             $isrc  ?? $track->isrc,
             $this->urlGenerator->generate('track_management.presentation.edit', ['trackUuid' => $trackUuid]),
-            $this->urlGenerator->generate('track_management.presentation.show', ['trackUuid' => $trackUuid]),
+            $this->overviewNavigationState->buildTrackShowUrl($trackUuid),
+            $this->overviewNavigationState->buildProjectOverviewUrl(),
             'Track speichern',
             $suggestedTitle,
             true

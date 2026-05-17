@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\TrackManagement\Presentation\Service;
 
 use App\Common\Presentation\Dto\PaginationLinkViewDto;
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\Common\Service\LocalizedDateTimeService;
 use App\FileImport\Facade\FileImportFacadeInterface;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
@@ -28,6 +29,7 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
         private TrackManagementDomainServiceInterface $trackManagementDomainService,
         private ProjectManagementFacadeInterface      $projectManagementFacade,
         private FileImportFacadeInterface             $fileImportFacade,
+        private OverviewNavigationState               $overviewNavigationState,
         private LocalizedDateTimeService              $localizedDateTimeService,
         private UrlGeneratorInterface                 $urlGenerator
     ) {
@@ -105,7 +107,8 @@ readonly class TrackOverviewPresentationService implements TrackOverviewPresenta
             $this->urlGenerator->generate('track_management.presentation.list'),
             $this->urlGenerator->generate('track_management.presentation.suggestions'),
             $this->buildExportUrl($filter),
-            $this->urlGenerator->generate('track_management.presentation.create')
+            $this->urlGenerator->generate('track_management.presentation.create'),
+            $this->overviewNavigationState->buildProjectOverviewUrl()
         );
     }
 

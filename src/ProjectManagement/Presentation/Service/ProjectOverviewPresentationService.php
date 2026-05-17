@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\ProjectManagement\Presentation\Service;
 
 use App\Common\Presentation\Dto\PaginationLinkViewDto;
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\ProjectManagement\Domain\Dto\ProjectListFilterDto;
 use App\ProjectManagement\Domain\Dto\ProjectListItemDto;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
@@ -22,6 +23,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
 
     public function __construct(
         private ProjectManagementDomainServiceInterface $projectManagementDomainService,
+        private OverviewNavigationState                 $overviewNavigationState,
         private UrlGeneratorInterface                   $urlGenerator
     ) {
     }
@@ -82,7 +84,7 @@ readonly class ProjectOverviewPresentationService implements ProjectOverviewPres
             $this->urlGenerator->generate('project_management.presentation.suggestions'),
             $this->buildExportUrl($filter),
             $this->urlGenerator->generate('project_management.presentation.create'),
-            $this->urlGenerator->generate('track_management.presentation.index')
+            $this->overviewNavigationState->buildTrackOverviewUrl()
         );
     }
 
