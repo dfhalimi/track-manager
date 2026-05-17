@@ -117,13 +117,33 @@ final class TrackFileImportController extends AbstractController
 
     private function redirectAfterUpload(Request $request, string $trackUuid): Response
     {
-        $redirectTo = $request->request->get('redirect_to');
+        $redirectTo     = $request->request->get('redirect_to');
+        $openFileDialog = $request->request->get('open_file_dialog');
 
         if (is_string($redirectTo) && str_starts_with($redirectTo, '/')) {
+            if (is_string($openFileDialog) && $openFileDialog !== '') {
+                return $this->redirect($this->appendQueryParameterToLocalUrl($redirectTo, 'fileDialog', $openFileDialog));
+            }
+
             return $this->redirect($redirectTo);
         }
 
         return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+    }
+
+    private function appendQueryParameterToLocalUrl(string $url, string $name, string $value): string
+    {
+        $fragmentPosition = strpos($url, '#');
+        $fragment         = '';
+
+        if ($fragmentPosition !== false) {
+            $fragment = substr($url, $fragmentPosition);
+            $url      = substr($url, 0, $fragmentPosition);
+        }
+
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url . $separator . rawurlencode($name) . '=' . rawurlencode($value) . $fragment;
     }
 
     private function mapUploadErrorToMessage(int $errorCode): string

@@ -6,6 +6,7 @@ use App\ActivityHistory\Domain\Dto\RecordActivityHistoryEntryInputDto;
 use App\ActivityHistory\Domain\Service\ActivityHistoryDomainServiceInterface;
 use App\ActivityHistory\Domain\SymfonyEventSubscriber\ActivityHistorySymfonyEventSubscriber;
 use App\Common\Service\LocalizedDateTimeService;
+use App\FileImport\Facade\SymfonyEvent\TrackFileReplacedSymfonyEvent;
 use App\ProjectManagement\Facade\Dto\ProjectDto;
 use App\ProjectManagement\Facade\Dto\ProjectListFilterInputDto;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
@@ -73,6 +74,30 @@ describe('ActivityHistorySymfonyEventSubscriber', function (): void {
         expect($historyDomainService->recordedInputs[0]->entityType)->toBe('track');
         expect($historyDomainService->recordedInputs[0]->summary)->toBe('Track-Status geändert');
         expect($historyDomainService->recordedInputs[0]->details)->toBe(['Status: New -> In Progress']);
+    });
+
+    it('writes track history when an audio file is replaced', function (): void {
+        $historyDomainService = new RecordingActivityHistoryDomainService();
+        $subscriber           = new ActivityHistorySymfonyEventSubscriber(
+            $historyDomainService,
+            new ActivityHistoryTrackManagementFacadeStub(),
+            new ActivityHistoryProjectManagementFacadeStub(),
+            new LocalizedDateTimeService('Europe/Berlin')
+        );
+
+        $subscriber->onTrackFileReplaced(
+            new TrackFileReplacedSymfonyEvent(
+                'track-1',
+                'replacement.wav',
+                DateAndTimeService::getDateTimeImmutable()
+            )
+        );
+
+        expect($historyDomainService->recordedInputs)->toHaveCount(1);
+        expect($historyDomainService->recordedInputs[0]->entityType)->toBe('track');
+        expect($historyDomainService->recordedInputs[0]->eventType)->toBe('track_file_replaced');
+        expect($historyDomainService->recordedInputs[0]->summary)->toBe('Datei ersetzt');
+        expect($historyDomainService->recordedInputs[0]->details)->toBe(['Datei "replacement.wav".']);
     });
 
     it('writes the actual release date when a project is published', function (): void {
