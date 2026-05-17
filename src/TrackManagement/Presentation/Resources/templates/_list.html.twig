@@ -205,6 +205,9 @@
             {{ view.totalItems }} {{ view.totalItems == 1 ? 'Treffer' : 'Treffer' }} · Seite {{ view.currentPage }} von {{ view.totalPages }}
         </p>
         <div class="flex flex-wrap items-center gap-2">
+            {% if view.firstPageUrl %}
+                <a href="{{ view.firstPageUrl }}" data-live-search-page="1" class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-900">1</a>
+            {% endif %}
             {% if view.previousPageUrl %}
                 <a href="{{ view.previousPageUrl }}" data-live-search-page="{{ view.currentPage - 1 }}" class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-900">Zurück</a>
             {% endif %}
@@ -217,6 +220,9 @@
             {% endfor %}
             {% if view.nextPageUrl %}
                 <a href="{{ view.nextPageUrl }}" data-live-search-page="{{ view.currentPage + 1 }}" class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-900">Weiter</a>
+            {% endif %}
+            {% if view.lastPageUrl %}
+                <a href="{{ view.lastPageUrl }}" data-live-search-page="{{ view.totalPages }}" class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-900">{{ view.totalPages }}</a>
             {% endif %}
         </div>
     </div>
