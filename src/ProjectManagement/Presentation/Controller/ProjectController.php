@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Controller;
 
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\Common\Service\LocalizedDateTimeService;
 use App\MediaAssetManagement\Facade\MediaAssetManagementFacadeInterface;
 use App\ProjectManagement\Domain\Dto\CreateProjectInputDto;
@@ -33,6 +34,7 @@ final class ProjectController extends AbstractController
         private readonly ProjectFormPresentationServiceInterface             $projectFormPresentationService,
         private readonly ProjectPublishReadinessPresentationServiceInterface $projectPublishReadinessPresentationService,
         private readonly ProjectManagementDomainServiceInterface             $projectManagementDomainService,
+        private readonly OverviewNavigationState                             $overviewNavigationState,
         private readonly LocalizedDateTimeService                            $localizedDateTimeService,
         private readonly MediaAssetManagementFacadeInterface                 $mediaAssetManagementFacade
     ) {
@@ -41,6 +43,8 @@ final class ProjectController extends AbstractController
     #[Route(path: '/projects', name: 'project_management.presentation.index', methods: [Request::METHOD_GET])]
     public function indexAction(Request $request): Response
     {
+        $this->overviewNavigationState->rememberProjectOverview($request);
+
         return $this->render('@projectmanagement.presentation/index.html.twig', [
             'view' => $this->projectOverviewPresentationService->buildProjectListViewDto(
                 $request->query->getString('q', ''),
@@ -57,6 +61,8 @@ final class ProjectController extends AbstractController
     #[Route(path: '/projects/list', name: 'project_management.presentation.list', methods: [Request::METHOD_GET])]
     public function listAction(Request $request): Response
     {
+        $this->overviewNavigationState->rememberProjectOverview($request);
+
         return $this->render('@projectmanagement.presentation/_list.html.twig', [
             'view' => $this->projectOverviewPresentationService->buildProjectListViewDto(
                 $request->query->getString('q', ''),
@@ -106,7 +112,7 @@ final class ProjectController extends AbstractController
 
                 $this->addFlash('success', 'Projekt wurde erstellt.');
 
-                return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $project->getUuid()]);
+                return $this->redirectToProjectShow($project->getUuid());
             } catch (Throwable $throwable) {
                 $this->addFlash('error', $throwable->getMessage());
             }
@@ -135,7 +141,7 @@ final class ProjectController extends AbstractController
         if ($this->projectManagementDomainService->getProjectByUuid($projectUuid)->isCancelled()) {
             $this->addFlash('error', 'Archivierte Projekte koennen nicht bearbeitet werden.');
 
-            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+            return $this->redirectToProjectShow($projectUuid);
         }
 
         if ($request->isMethod(Request::METHOD_POST)) {
@@ -157,7 +163,7 @@ final class ProjectController extends AbstractController
 
                 $this->addFlash('success', 'Projekt wurde aktualisiert.');
 
-                return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+                return $this->redirectToProjectShow($projectUuid);
             } catch (Throwable $throwable) {
                 $this->addFlash('error', $throwable->getMessage());
             }
@@ -180,13 +186,13 @@ final class ProjectController extends AbstractController
         if (!$this->isCsrfTokenValid('cancel_project_' . $projectUuid, $request->request->getString('_token'))) {
             $this->addFlash('error', 'Ungültiges CSRF-Token.');
 
-            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+            return $this->redirectToProjectShow($projectUuid);
         }
 
         $this->projectManagementDomainService->cancelProject($projectUuid);
         $this->addFlash('success', 'Projekt wurde archiviert.');
 
-        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        return $this->redirectToProjectShow($projectUuid);
     }
 
     #[Route(path: '/projects/{projectUuid}/reactivate', name: 'project_management.presentation.reactivate', methods: [Request::METHOD_POST])]
@@ -195,13 +201,13 @@ final class ProjectController extends AbstractController
         if (!$this->isCsrfTokenValid('reactivate_project_' . $projectUuid, $request->request->getString('_token'))) {
             $this->addFlash('error', 'Ungültiges CSRF-Token.');
 
-            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+            return $this->redirectToProjectShow($projectUuid);
         }
 
         $this->projectManagementDomainService->reactivateProject($projectUuid);
         $this->addFlash('success', 'Projekt wurde reaktiviert.');
 
-        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        return $this->redirectToProjectShow($projectUuid);
     }
 
     #[Route(path: '/projects/{projectUuid}/publish', name: 'project_management.presentation.publish', methods: [Request::METHOD_POST])]
@@ -221,7 +227,7 @@ final class ProjectController extends AbstractController
             ) {
                 $this->addFlash('error', 'Bitte bestätige das Veröffentlichen trotz fehlender Track-Angaben noch einmal.');
 
-                return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+                return $this->redirectToProjectShow($projectUuid);
             }
 
             $this->projectManagementDomainService->publishProject(
@@ -236,7 +242,7 @@ final class ProjectController extends AbstractController
             $this->addFlash('error', $throwable->getMessage());
         }
 
-        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        return $this->redirectToProjectShow($projectUuid);
     }
 
     #[Route(path: '/projects/{projectUuid}/unpublish', name: 'project_management.presentation.unpublish', methods: [Request::METHOD_POST])]
@@ -245,7 +251,7 @@ final class ProjectController extends AbstractController
         if (!$this->isCsrfTokenValid('unpublish_project_' . $projectUuid, $request->request->getString('_token'))) {
             $this->addFlash('error', 'Ungültiges CSRF-Token.');
 
-            return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+            return $this->redirectToProjectShow($projectUuid);
         }
 
         try {
@@ -255,7 +261,12 @@ final class ProjectController extends AbstractController
             $this->addFlash('error', $throwable->getMessage());
         }
 
-        return $this->redirectToRoute('project_management.presentation.show', ['projectUuid' => $projectUuid]);
+        return $this->redirectToProjectShow($projectUuid);
+    }
+
+    private function redirectToProjectShow(string $projectUuid): Response
+    {
+        return $this->redirect($this->overviewNavigationState->buildProjectShowUrl($projectUuid));
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Presentation\Service;
 
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\Common\Service\LocalizedDateTimeService;
 use App\FileImport\Facade\FileImportFacadeInterface;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
@@ -21,6 +22,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
         private TrackManagementFacadeInterface   $trackManagementFacade,
         private ProjectManagementFacadeInterface $projectManagementFacade,
         private FileImportFacadeInterface        $fileImportFacade,
+        private OverviewNavigationState          $overviewNavigationState,
         private LocalizedDateTimeService         $localizedDateTimeService,
         private UrlGeneratorInterface            $urlGenerator
     ) {
@@ -95,7 +97,7 @@ readonly class TrackDetailPresentationService implements TrackDetailPresentation
                 $this->urlGenerator->generate('file_export.presentation.export', ['trackUuid' => $trackUuid, 'format' => 'wav'])
             ),
             $this->urlGenerator->generate('activity_history.presentation.track_modal', ['trackUuid' => $trackUuid]),
-            $this->urlGenerator->generate('track_management.presentation.index'),
+            $this->overviewNavigationState->buildTrackOverviewUrl(),
             $this->urlGenerator->generate('track_management.presentation.edit', ['trackUuid' => $trackUuid]),
             $this->urlGenerator->generate('track_management.presentation.cancel', ['trackUuid' => $trackUuid]),
             $this->urlGenerator->generate('track_management.presentation.reactivate', ['trackUuid' => $trackUuid]),

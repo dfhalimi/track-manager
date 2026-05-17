@@ -24,6 +24,7 @@ readonly class TrackFormViewDto
         public ?string $isrc,
         public string  $formAction,
         public string  $cancelUrl,
+        public string  $projectsIndexUrl,
         public string  $submitLabel,
         public string  $suggestedTitle,
         public bool    $isEditMode

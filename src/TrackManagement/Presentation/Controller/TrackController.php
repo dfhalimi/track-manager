@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\TrackManagement\Presentation\Controller;
 
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\ProjectManagement\Facade\ProjectManagementFacadeInterface;
 use App\TrackManagement\Domain\Dto\CreateTrackInputDto;
 use App\TrackManagement\Domain\Dto\UpdateTrackInputDto;
@@ -25,6 +26,7 @@ final class TrackController extends AbstractController
         private readonly TrackDetailPresentationServiceInterface   $trackDetailPresentationService,
         private readonly TrackFormPresentationServiceInterface     $trackFormPresentationService,
         private readonly TrackManagementDomainServiceInterface     $trackManagementDomainService,
+        private readonly OverviewNavigationState                   $overviewNavigationState,
         private readonly ProjectManagementFacadeInterface          $projectManagementFacade
     ) {
     }
@@ -32,6 +34,8 @@ final class TrackController extends AbstractController
     #[Route(path: '/tracks', name: 'track_management.presentation.index', methods: [Request::METHOD_GET])]
     public function indexAction(Request $request): Response
     {
+        $this->overviewNavigationState->rememberTrackOverview($request);
+
         $viewDto = $this->trackOverviewPresentationService->buildTrackListViewDto(
             $request->query->getString('q', ''),
             $request->query->getString('status', ''),
@@ -50,6 +54,8 @@ final class TrackController extends AbstractController
     #[Route(path: '/tracks/list', name: 'track_management.presentation.list', methods: [Request::METHOD_GET])]
     public function listAction(Request $request): Response
     {
+        $this->overviewNavigationState->rememberTrackOverview($request);
+
         return $this->render('@trackmanagement.presentation/_list.html.twig', [
             'view' => $this->trackOverviewPresentationService->buildTrackListViewDto(
                 $request->query->getString('q', ''),
@@ -97,7 +103,7 @@ final class TrackController extends AbstractController
 
                 $this->addFlash('success', 'Track wurde erstellt.');
 
-                return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $track->getUuid()]);
+                return $this->redirectToTrackShow($track->getUuid());
             } catch (Throwable $throwable) {
                 $this->addFlash('error', $throwable->getMessage());
             }
@@ -132,7 +138,7 @@ final class TrackController extends AbstractController
         if ($this->trackManagementDomainService->getTrackByUuid($trackUuid)->isCancelled()) {
             $this->addFlash('error', 'Archivierte Tracks koennen nicht bearbeitet werden.');
 
-            return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+            return $this->redirectToTrackShow($trackUuid);
         }
 
         if ($request->isMethod(Request::METHOD_POST)) {
@@ -153,7 +159,7 @@ final class TrackController extends AbstractController
 
                 $this->addFlash('success', 'Track wurde aktualisiert.');
 
-                return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+                return $this->redirectToTrackShow($trackUuid);
             } catch (Throwable $throwable) {
                 $this->addFlash('error', $throwable->getMessage());
             }
@@ -179,14 +185,14 @@ final class TrackController extends AbstractController
         if (!$this->isCsrfTokenValid('cancel_track_' . $trackUuid, $request->request->getString('_token'))) {
             $this->addFlash('error', 'Ungültiges CSRF-Token.');
 
-            return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+            return $this->redirectToTrackShow($trackUuid);
         }
 
         $this->projectManagementFacade->removeTrackFromActiveProjects($trackUuid);
         $this->trackManagementDomainService->cancelTrack($trackUuid);
         $this->addFlash('success', 'Track wurde archiviert.');
 
-        return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+        return $this->redirectToTrackShow($trackUuid);
     }
 
     #[Route(path: '/tracks/{trackUuid}/reactivate', name: 'track_management.presentation.reactivate', methods: [Request::METHOD_POST])]
@@ -195,13 +201,18 @@ final class TrackController extends AbstractController
         if (!$this->isCsrfTokenValid('reactivate_track_' . $trackUuid, $request->request->getString('_token'))) {
             $this->addFlash('error', 'Ungültiges CSRF-Token.');
 
-            return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+            return $this->redirectToTrackShow($trackUuid);
         }
 
         $this->trackManagementDomainService->reactivateTrack($trackUuid);
         $this->addFlash('success', 'Track wurde reaktiviert.');
 
-        return $this->redirectToRoute('track_management.presentation.show', ['trackUuid' => $trackUuid]);
+        return $this->redirectToTrackShow($trackUuid);
+    }
+
+    private function redirectToTrackShow(string $trackUuid): Response
+    {
+        return $this->redirect($this->overviewNavigationState->buildTrackShowUrl($trackUuid));
     }
 
     private function normalizeNullableString(string $value): ?string

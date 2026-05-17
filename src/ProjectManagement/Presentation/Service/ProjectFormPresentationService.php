@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Service;
 
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\Common\Service\LocalizedDateTimeService;
 use App\ProjectManagement\Domain\Entity\ProjectCategory;
 use App\ProjectManagement\Domain\Service\ProjectManagementDomainServiceInterface;
@@ -15,6 +16,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
 {
     public function __construct(
         private ProjectManagementDomainServiceInterface $projectManagementDomainService,
+        private OverviewNavigationState                 $overviewNavigationState,
         private LocalizedDateTimeService                $localizedDateTimeService,
         private UrlGeneratorInterface                   $urlGenerator
     ) {
@@ -35,7 +37,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             null,
             $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $this->urlGenerator->generate('project_management.presentation.create'),
-            $this->urlGenerator->generate('project_management.presentation.index'),
+            $this->overviewNavigationState->buildProjectOverviewUrl(),
             'Projekt erstellen',
             false
         );
@@ -61,7 +63,7 @@ readonly class ProjectFormPresentationService implements ProjectFormPresentation
             $publishedAtInputValue ?? $this->localizedDateTimeService->formatForInput($project->getPublishedAt()),
             $this->localizedDateTimeService->formatForInput(DateAndTimeService::getDateTimeImmutable()),
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),
-            $this->urlGenerator->generate('project_management.presentation.show', ['projectUuid' => $projectUuid]),
+            $this->overviewNavigationState->buildProjectShowUrl($projectUuid),
             'Projekt speichern',
             true
         );

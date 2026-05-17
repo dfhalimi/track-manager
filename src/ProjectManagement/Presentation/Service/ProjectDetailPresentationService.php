@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ProjectManagement\Presentation\Service;
 
+use App\Common\Presentation\Service\OverviewNavigationState;
 use App\Common\Service\LocalizedDateTimeService;
 use App\FileImport\Facade\FileImportFacadeInterface;
 use App\MediaAssetManagement\Facade\MediaAssetManagementFacadeInterface;
@@ -25,6 +26,7 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
         private FileImportFacadeInterface                           $fileImportFacade,
         private MediaAssetManagementFacadeInterface                 $mediaAssetManagementFacade,
         private ProjectPublishReadinessPresentationServiceInterface $projectPublishReadinessPresentationService,
+        private OverviewNavigationState                             $overviewNavigationState,
         private LocalizedDateTimeService                            $localizedDateTimeService,
         private UrlGeneratorInterface                               $urlGenerator
     ) {
@@ -109,8 +111,8 @@ readonly class ProjectDetailPresentationService implements ProjectDetailPresenta
                 $this->urlGenerator->generate('media_asset_management.presentation.export', ['projectUuid' => $projectUuid, 'format' => 'png'])
             ),
             $this->urlGenerator->generate('activity_history.presentation.project_modal', ['projectUuid' => $projectUuid]),
-            $this->urlGenerator->generate('project_management.presentation.index'),
-            $this->urlGenerator->generate('track_management.presentation.index'),
+            $this->overviewNavigationState->buildProjectOverviewUrl(),
+            $this->overviewNavigationState->buildTrackOverviewUrl(),
             $this->urlGenerator->generate('project_management.presentation.edit', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.cancel', ['projectUuid' => $projectUuid]),
             $this->urlGenerator->generate('project_management.presentation.reactivate', ['projectUuid' => $projectUuid]),
